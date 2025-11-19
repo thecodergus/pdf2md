@@ -13,7 +13,7 @@ def main() -> None:
     # Configuração de caminhos e parâmetros
     input_pdf = Path(input("Digite o caminho do PDF: ")).resolve()
     config = PipelineConfig(
-        chunk_size=10, cache_dir=Path("cache"), output_dir=Path("output")
+        chunk_size=1, cache_dir=Path("cache"), output_dir=Path("output")
     )
 
     if not input_pdf.exists() or not input_pdf.is_file():
