@@ -7,11 +7,13 @@ from src.cache_manager import CacheManager
 from src.conversion import configure_docling_converter, convert_chunk_to_markdown
 from src.merge import merge_markdown_chunks
 from src.ui import process_with_progress
+import logging, sys
 
 
 def main() -> None:
     # Configuração de caminhos e parâmetros
-    input_pdf = Path(input("Digite o caminho do PDF: ")).resolve()
+    input_pdf = Path("inputs/Manual de publicações da SBC.pdf").resolve()
+    # input_pdf = Path(input("Digite o caminho do PDF: ")).resolve()
     config = PipelineConfig(
         chunk_size=1, cache_dir=Path("cache"), output_dir=Path("output")
     )
@@ -48,4 +50,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    logging.disable(sys.maxsize)
     main()
