@@ -33,7 +33,7 @@ O **pdf2md** é uma ferramenta moderna para conversão de arquivos PDF em Markdo
 ## Funcionalidades
 
 - Conversão PDF → Markdown com pipeline VLM GraniteDocling (OCR, tabelas, fórmulas, imagens)
-- Chunking incremental: divide PDFs em blocos de 10 páginas para processamento eficiente
+- Chunking incremental: divide PDFs em blocos de 1 páginas para processamento eficiente
 - Cache persistente: evita retrabalho e permite retomada automática do ponto de parada
 - Interface CLI Rich: barra de progresso visual, sem poluição de prints
 - Validação de integridade: detecta PDFs corrompidos antes de processar
