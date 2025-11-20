@@ -12,9 +12,7 @@ import logging, sys
 
 def main() -> None:
     # Configuração de caminhos e parâmetros
-    input_pdf = Path(
-        "inputs/Organização e Projeto de Computadores Interface Hardware-Software.pdf"
-    ).resolve()
+    input_pdf = Path("inputs/Manual de publicações da SBC.pdf").resolve()
     # input_pdf = Path(input("Digite o caminho do PDF: ")).resolve()
     config = PipelineConfig(
         chunk_size=1, cache_dir=Path("cache"), output_dir=Path("outputs")
@@ -44,6 +42,9 @@ def main() -> None:
 
     process_with_progress(chunks, process_chunk)
     cache.close()
+
+    # Limpar
+    cache.clear_cache_parallel()
 
     # Merge final
     output_md = config.output_dir / f"{input_pdf.stem}.md"
