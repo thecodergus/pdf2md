@@ -10,11 +10,11 @@ from docling.datamodel.pipeline_options_vlm_model import (
 )
 from docling.datamodel.pipeline_options import (
     VlmPipelineOptions,
-    AcceleratorDevice,
     RapidOcrOptions,
 )
 from docling.document_converter import DocumentConverter, PdfFormatOption
 from docling.pipeline.vlm_pipeline import VlmPipeline
+from docling.datamodel.accelerator_options import AcceleratorDevice, AcceleratorOptions
 
 
 def configure_docling_converter() -> DocumentConverter:
@@ -48,7 +48,7 @@ def configure_docling_converter() -> DocumentConverter:
             response_format=ResponseFormat.MARKDOWN,
             inference_framework=InferenceFramework.TRANSFORMERS,
             transformers_model_type=TransformersModelType.AUTOMODEL_IMAGETEXTTOTEXT,
-            accelerator_options=AcceleratorDevice(device=AcceleratorDevice.CUDA),
+            accelerator_options=AcceleratorOptions(device=AcceleratorDevice.CUDA),
             supported_devices=[
                 AcceleratorDevice.CUDA,
             ],
