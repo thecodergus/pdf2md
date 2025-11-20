@@ -43,7 +43,7 @@ def configure_docling_converter() -> DocumentConverter:
             response_format=ResponseFormat.MARKDOWN,
             inference_framework=InferenceFramework.TRANSFORMERS,
             transformers_model_type=TransformersModelType.AUTOMODEL_IMAGETEXTTOTEXT,
-            supported_devices=[AcceleratorDevice.CUDA, AcceleratorDevice.CPU],
+            device=AcceleratorDevice.CUDA,
             scale=2.0,
             temperature=0.3,
             top_p=0.8,
