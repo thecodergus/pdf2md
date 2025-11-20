@@ -7,6 +7,8 @@ requires-python = ">=3.13"
 dependencies = [
     "diskcache>=5.6.3",
     "docling[vlm]>=2.63.0",
+    "huggingface-hub>=0.36.0",
+    "opencv-python>=4.12.0.88",
     "pymupdf>=1.26.6",
     "rich>=14.2.0",
 ]
