@@ -1,26 +1,50 @@
-# Codemagus: Conversão PDF→Markdown com docling VLM granite_docling
-from .types import ChunkInfo
-from docling.datamodel.base_models import InputFormat
-from docling.datamodel.pipeline_options import PdfPipelineOptions, RapidOcrOptions
+# Codemagus: Conversão PDF→Markdown com docling VLM Qwen3-VL-8B-Instruct (local)
+from pathlib import Path
+from .types import ChunkInfo, ChunkList
+from docling.datamodel.base_models import InputFormat, AcceleratorDevice
+from docling.datamodel.pipeline_options_vlm_model import (
+    InlineVlmOptions,
+    ResponseFormat,
+    InferenceFramework,
+    TransformersModelType,
+)
+from docling.datamodel.pipeline_options import VlmPipelineOptions
 from docling.document_converter import DocumentConverter, PdfFormatOption
-
-
-ARTIFACTS_PATH: str = "/home/gustavo/.cache/docling/models"
+from docling.pipeline.vlm_pipeline import VlmPipeline
 
 
 def configure_docling_converter() -> DocumentConverter:
     """
-    Configura o conversor docling para pipeline VLM com modelo granite_docling.
+    Configura o conversor docling para pipeline VLM com modelo Qwen/Qwen3-VL-8B-Instruct (local).
+    Outras opções para testar:
+    - openbmb/MiniCPM-o-2_6
+    - Qwen/Qwen3-VL-32B-Instruct
+    - Qwen/Qwen2.5-VL-32B-Instruct
     """
-
-    pipeline_options = PdfPipelineOptions(artifacts_path=ARTIFACTS_PATH)
-    pipeline_options.ocr_options = RapidOcrOptions(
-        backend="torch",
+    pipeline_options: VlmPipelineOptions = VlmPipelineOptions(
+        vlm_options=InlineVlmOptions(
+            repo_id="Qwen/Qwen3-VL-8B-Instruct",
+            prompt=(
+                "Converta esta página para Markdown seguindo a risca a estrutura. "
+                "Não perca nenhum texto, código de linguagens de programação/marcação/terminal/estilo ou imagem!"
+            ),
+            response_format=ResponseFormat.MARKDOWN,
+            inference_framework=InferenceFramework.TRANSFORMERS,
+            transformers_model_type=TransformersModelType.AUTOMODEL_IMAGETEXTTOTEXT,
+            supported_devices=[AcceleratorDevice.CUDA, AcceleratorDevice.CPU],
+            scale=2.0,
+            temperature=0.3,
+            top_p=0.8,
+            top_k=20,
+            presence_penalty=1.5,
+            out_seq_length=16384,
+        )
     )
-
     return DocumentConverter(
         format_options={
-            InputFormat.PDF: PdfFormatOption(pipeline_options=pipeline_options)
+            InputFormat.PDF: PdfFormatOption(
+                pipeline_cls=VlmPipeline, pipeline_options=pipeline_options
+            )
         }
     )
 
