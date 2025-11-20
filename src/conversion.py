@@ -1,14 +1,14 @@
 # Codemagus: Conversão PDF→Markdown com docling VLM Qwen3-VL-8B-Instruct (local)
 from pathlib import Path
 from .types import ChunkInfo, ChunkList
-from docling.datamodel.base_models import InputFormat, AcceleratorDevice
+from docling.datamodel.base_models import InputFormat
 from docling.datamodel.pipeline_options_vlm_model import (
     InlineVlmOptions,
     ResponseFormat,
     InferenceFramework,
     TransformersModelType,
 )
-from docling.datamodel.pipeline_options import VlmPipelineOptions
+from docling.datamodel.pipeline_options import VlmPipelineOptions, AcceleratorDevice
 from docling.document_converter import DocumentConverter, PdfFormatOption
 from docling.pipeline.vlm_pipeline import VlmPipeline
 
