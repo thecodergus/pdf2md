@@ -24,16 +24,28 @@ def configure_docling_converter() -> DocumentConverter:
     pipeline_options: VlmPipelineOptions = VlmPipelineOptions(
         vlm_options=InlineVlmOptions(
             repo_id="Qwen/Qwen3-VL-8B-Instruct",
-            prompt=(
-                "Converta esta página para Markdown seguindo a risca a estrutura. "
-                "Não perca nenhum texto, código de linguagens de programação/marcação/terminal/estilo ou imagem!"
-            ),
+            prompt="""
+                Converta esta página ou documento para Markdown, preservando rigorosamente toda a estrutura, hierarquia e conteúdo original. Siga as especificações técnicas abaixo:
+                ## ESTRUTURA E HIERARQUIA
+                - **Cabeçalhos:** Detecte e converta TODOS os títulos e subtítulos para o nível correto de cabeçalho Markdown (#, ##, ###, ####, #####, ######), mantendo a hierarquia original sem pular níveis.
+                - **Ordem de leitura:** Mantenha exatamente a mesma sequência e posicionamento de todos os elementos do documento.
+
+                ## CÓDIGO E BLOCOS TÉCNICOS
+                - **Blocos de código:** Extraia TODOS os blocos de código, comandos de terminal, trechos de configuração, scripts e exemplos de qualquer linguagem.
+                - **Identificação de linguagem:** Use fenced code blocks (três backticks) especificando corretamente a linguagem:
+                - ```python (para Python)
+                - ```javascript (para JavaScript)
+                - ```bash (para terminal/shell)
+                - ```mermaid (para diagramas Mermaid)
+                - ```sql, ```yaml, ```json, ```html, ```css, etc.
+                - **Indentação:** Preserve a indentação e o espaçamento exatos do código, inclusive em exemplos Mermaid e listas aninhadas.
+            """,
             response_format=ResponseFormat.MARKDOWN,
             inference_framework=InferenceFramework.TRANSFORMERS,
             transformers_model_type=TransformersModelType.AUTOMODEL_IMAGETEXTTOTEXT,
             supported_devices=[AcceleratorDevice.CUDA, AcceleratorDevice.CPU],
             scale=2.0,
-            temperature=0.3,
+            temperature=0.7,
             top_p=0.8,
             top_k=20,
             presence_penalty=1.5,
