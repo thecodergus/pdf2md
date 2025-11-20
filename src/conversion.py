@@ -8,7 +8,11 @@ from docling.datamodel.pipeline_options_vlm_model import (
     InferenceFramework,
     TransformersModelType,
 )
-from docling.datamodel.pipeline_options import VlmPipelineOptions, AcceleratorDevice
+from docling.datamodel.pipeline_options import (
+    VlmPipelineOptions,
+    AcceleratorDevice,
+    RapidOcrOptions,
+)
 from docling.document_converter import DocumentConverter, PdfFormatOption
 from docling.pipeline.vlm_pipeline import VlmPipeline
 
@@ -21,6 +25,7 @@ def configure_docling_converter() -> DocumentConverter:
     - Qwen/Qwen3-VL-32B-Instruct
     - Qwen/Qwen2.5-VL-32B-Instruct
     """
+
     pipeline_options: VlmPipelineOptions = VlmPipelineOptions(
         vlm_options=InlineVlmOptions(
             repo_id="Qwen/Qwen3-VL-8B-Instruct",
@@ -50,8 +55,12 @@ def configure_docling_converter() -> DocumentConverter:
             top_k=40,
             presence_penalty=0.5,
             out_seq_length=16384,
+            ocr_options=RapidOcrOptions(
+                backend="torch",
+            ),
         )
     )
+
     return DocumentConverter(
         format_options={
             InputFormat.PDF: PdfFormatOption(
