@@ -1,0 +1,782 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+cache/
+  .gitignore
+  .gitkeep
+inputs/
+  .gitkeep
+outputs/
+  .gitkeep
+src/
+  __init__.py
+  cache_manager.py
+  chunking.py
+  conversion.py
+  merge.py
+  types.py
+  ui.py
+  validation.py
+ .python-version
+.gitignore
+LICENSE
+main.py
+pyproject.toml
+README.md
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="src/cache_manager.py">
+from pathlib import Path
+from diskcache import Cache
+from .types import ChunkInfo, ChunkList
+
+
+class CacheManager:
+    def __init__(self, cache_dir: Path):
+        self.cache = Cache(str(cache_dir))
+
+    def is_chunk_processed(self, chunk: ChunkInfo) -> bool:
+        return chunk.md_path.exists() and self.cache.get(str(chunk.md_path), False)
+
+    def mark_chunk_processed(self, chunk: ChunkInfo) -> None:
+        self.cache[str(chunk.md_path)] = True
+
+    def close(self):
+        self.cache.close()
+</file>
+
+<file path="src/chunking.py">
+from pathlib import Path
+import fitz
+from .types import ChunkInfo, ChunkList
+
+
+def split_pdf_chunks(pdf_path: Path, chunk_size: int, cache_dir: Path) -> ChunkList:
+    """
+    Divide o PDF em chunks de N páginas, salva na pasta cache e retorna metadados ordenados.
+    """
+    with fitz.open(pdf_path) as doc:
+        total_pages = doc.page_count
+        chunk_infos: list[ChunkInfo] = []
+        for start in range(0, total_pages, chunk_size):
+            end = min(start + chunk_size, total_pages)
+            chunk_idx = (start // chunk_size) + 1
+            chunk_pdf = cache_dir / f"{pdf_path.stem}_chunk_{chunk_idx:04d}.pdf"
+            chunk_md = cache_dir / f"{pdf_path.stem}_chunk_{chunk_idx:04d}.md"
+            if not chunk_pdf.exists():
+                chunk_doc = fitz.open()
+                chunk_doc.insert_pdf(doc, from_page=start, to_page=end - 1)
+                chunk_doc.save(chunk_pdf)
+                chunk_doc.close()
+            chunk_infos.append(
+                ChunkInfo(pdf_path=chunk_pdf, md_path=chunk_md, index_=chunk_idx)
+            )
+        return tuple(chunk_infos)
+</file>
+
+<file path="src/conversion.py">
+# Codemagus: Conversão PDF→Markdown com docling VLM granite_docling
+from pathlib import Path
+from .types import ChunkInfo, ChunkList
+from docling.datamodel import vlm_model_specs
+from docling.datamodel.base_models import InputFormat
+from docling.datamodel.pipeline_options import VlmPipelineOptions
+from docling.document_converter import DocumentConverter, PdfFormatOption
+from docling.pipeline.vlm_pipeline import VlmPipeline
+
+
+def configure_docling_converter() -> DocumentConverter:
+    """
+    Configura o conversor docling para pipeline VLM com modelo granite_docling.
+    """
+    pipeline_options = VlmPipelineOptions(
+        vlm_options=vlm_model_specs.GRANITEDOCLING_TRANSFORMERS
+    )
+    return DocumentConverter(
+        format_options={
+            InputFormat.PDF: PdfFormatOption(
+                pipeline_cls=VlmPipeline, pipeline_options=pipeline_options
+            )
+        }
+    )
+
+
+def convert_chunk_to_markdown(chunk: ChunkInfo, converter: DocumentConverter) -> None:
+    """
+    Converte um chunk PDF em Markdown usando docling e salva na pasta cache.
+    """
+    result = converter.convert(str(chunk.pdf_path))
+    markdown = result.document.export_to_markdown()
+    chunk.md_path.write_text(markdown, encoding="utf-8")
+</file>
+
+<file path="src/merge.py">
+# Codemagus: Merge funcional de arquivos Markdown ordenados
+from pathlib import Path
+from .types import ChunkList, ChunkInfo
+
+
+def merge_markdown_chunks(chunks: ChunkList, output_path: Path) -> None:
+    """
+    Une todos os arquivos Markdown ordenados em um único arquivo final.
+    """
+    with output_path.open("w", encoding="utf-8") as outfile:
+        for chunk in sorted(chunks, key=lambda c: c.index_):
+            if chunk.md_path.exists():
+                outfile.write(chunk.md_path.read_text(encoding="utf-8"))
+                outfile.write("\n\n")
+</file>
+
+<file path="src/types.py">
+# Codemagus: Tipos, enums e dataclasses para pipeline PDF→Markdown
+from pathlib import Path
+from typing import NamedTuple, TypeAlias, Sequence
+from dataclasses import dataclass
+
+
+class ChunkInfo(NamedTuple):
+    pdf_path: Path
+    md_path: Path
+    index_: int
+
+
+@dataclass(frozen=True, slots=True)
+class PipelineConfig:
+    chunk_size: int
+    cache_dir: Path
+    output_dir: Path
+
+
+ChunkList: TypeAlias = Sequence[ChunkInfo]
+</file>
+
+<file path="src/ui.py">
+# Codemagus: Interface Rich para barra de progresso elegante
+from typing import Sequence, Callable
+from .types import ChunkInfo
+from rich.progress import (
+    Progress,
+    BarColumn,
+    TextColumn,
+    TaskProgressColumn,
+    TimeRemainingColumn,
+)
+
+
+def process_with_progress(
+    chunks: Sequence[ChunkInfo], process_fn: Callable[[ChunkInfo], None]
+) -> None:
+    """
+    Processa a conversão de chunks com barra de progresso Rich e títulos dinâmicos.
+    """
+    with Progress(
+        TextColumn("[bold blue]Conversão PDF → Markdown:"),
+        BarColumn(),
+        TaskProgressColumn(),
+        TimeRemainingColumn(),
+        transient=True,
+        expand=True,
+    ) as progress:
+        task = progress.add_task("Convertendo chunks...", total=len(chunks))
+        for chunk in chunks:
+            progress.update(task, description=f"Convertendo chunk {chunk.index}...")
+            process_fn(chunk)
+            progress.update(task, advance=1)
+</file>
+
+<file path="src/validation.py">
+# Codemagus: Validação funcional de PDF com PyMuPDF
+from pathlib import Path
+import fitz  # PyMuPDF
+
+
+def is_valid_pdf(pdf_path: Path) -> bool:
+    """
+    Verifica se o PDF é íntegro e não corrompido.
+    """
+    try:
+        fitz.TOOLS.reset_mupdf_warnings()
+        with fitz.open(pdf_path) as doc:
+            for i in range(doc.page_count):
+                doc.load_page(i)
+        return True
+    except Exception:
+        return False
+</file>
+
+<file path=" .python-version">
+3.13
+</file>
+
+<file path="LICENSE">
+MIT License
+
+Copyright (c) 2025 Gustavo Michels de Camargo
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+</file>
+
+<file path="pyproject.toml">
+[project]
+name = "pdf2md"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "diskcache>=5.6.3",
+    "pymupdf>=1.26.6",
+    "rich>=14.2.0",
+]
+</file>
+
+<file path="cache/.gitignore">
+cache.db-wal
+cache.db
+cache.db-shm
+*.pdf
+*.md
+</file>
+
+<file path="main.py">
+# Codemagus: Entry point do pipeline PDF→Markdown modular e funcional
+from pathlib import Path
+from src.types import PipelineConfig
+from src.validation import is_valid_pdf
+from src.chunking import split_pdf_chunks
+from src.cache_manager import CacheManager
+from src.conversion import configure_docling_converter, convert_chunk_to_markdown
+from src.merge import merge_markdown_chunks
+from src.ui import process_with_progress
+import logging, sys
+
+
+def main() -> None:
+    # Configuração de caminhos e parâmetros
+    input_pdf = Path("inputs/Manual de publicações da SBC.pdf").resolve()
+    # input_pdf = Path(input("Digite o caminho do PDF: ")).resolve()
+    config = PipelineConfig(
+        chunk_size=1, cache_dir=Path("cache"), output_dir=Path("outputs")
+    )
+
+    if not input_pdf.exists() or not input_pdf.is_file():
+        print("Arquivo não encontrado.")
+        return
+    if not is_valid_pdf(input_pdf):
+        print("PDF inválido ou corrompido.")
+        return
+
+    config.cache_dir.mkdir(exist_ok=True)
+    config.output_dir.mkdir(exist_ok=True)
+
+    # Chunking
+    chunks = split_pdf_chunks(input_pdf, config.chunk_size, config.cache_dir)
+
+    # Cache e conversão
+    cache = CacheManager(config.cache_dir)
+    converter = configure_docling_converter()
+
+    def process_chunk(chunk):
+        if not cache.is_chunk_processed(chunk):
+            convert_chunk_to_markdown(chunk, converter)
+            cache.mark_chunk_processed(chunk)
+
+    process_with_progress(chunks, process_chunk)
+    cache.close()
+
+    # Merge final
+    output_md = config.output_dir / f"{input_pdf.stem}.md"
+    merge_markdown_chunks(chunks, output_md)
+    print(f"Conversão concluída. Markdown salvo em: {output_md}")
+
+
+if __name__ == "__main__":
+    logging.disable(sys.maxsize)
+    main()
+</file>
+
+<file path="README.md">
+# pdf2md
+
+Conversor robusto, modular e incremental de PDF para Markdown, com chunking, cache persistente, interface Rich e pipeline VLM GraniteDocling. Pronto para retomada automática, uso em GPU (NVidia CUDA recomendado, mas não obrigatório) e automação documental.
+
+---
+
+## Sumário
+
+- [Visão Geral](#visão-geral)
+- [Funcionalidades](#funcionalidades)
+- [Estrutura do Projeto](#estrutura-do-projeto)
+- [Pré-requisitos](#pré-requisitos)
+- [Instalação](#instalação)
+- [Uso](#uso)
+- [Fluxo de Processamento](#fluxo-de-processamento)
+- [Arquitetura Modular](#arquitetura-modular)
+- [Dependências](#dependências)
+- [FAQ](#faq)
+- [Contribuindo](#contribuindo)
+- [Licença](#licença)
+- [Agradecimentos](#agradecimentos)
+- [Links Úteis](#links-úteis)
+
+---
+
+## Visão Geral
+
+O **pdf2md** é uma ferramenta moderna para conversão de arquivos PDF em Markdown, com extração semântica avançada via docling VLM GraniteDocling, chunking incremental, cache persistente e interface CLI elegante baseada em Rich. O pipeline é resiliente a falhas, permite retomada automática e foi projetado para fluxos de trabalho profissionais, pesquisa, automação e integração com IA.
+
+---
+
+## Funcionalidades
+
+- Conversão PDF → Markdown com pipeline VLM GraniteDocling (OCR, tabelas, fórmulas, imagens)
+- Chunking incremental: divide PDFs em blocos de 1 página para processamento eficiente
+- Cache persistente: evita retrabalho e permite retomada automática do ponto de parada
+- Interface CLI Rich: barra de progresso visual, sem poluição de prints
+- Validação de integridade: detecta PDFs corrompidos antes de processar
+- Arquitetura modular: separação clara de responsabilidades, fácil manutenção e extensão
+- Pronto para GPU: recomendado uso em máquinas com NVidia CUDA, mas não obrigatório
+- Execução moderna com uv: ambiente reprodutível, rápido e seguro
+
+---
+
+## Estrutura do Projeto
+
+```
+pdf2md/
+├── main.py
+├── src/
+│   ├── __init__.py
+│   ├── cache_manager.py
+│   ├── chunking.py
+│   ├── conversion.py
+│   ├── merge.py
+│   ├── types.py
+│   ├── ui.py
+│   └── validation.py
+├── cache/
+│   ├── .gitignore
+│   └── .gitkeep
+├── inputs/
+│   └── .gitkeep
+├── outputs/
+│   └── .gitkeep
+├── .python-version
+├── .gitignore
+├── LICENSE
+├── pyproject.toml
+└── README.md
+```
+
+---
+
+## Pré-requisitos
+
+- **Python 3.13+** (recomendado)
+- **uv** (https://github.com/astral-sh/uv) — gerenciador de ambientes ultrarrápido
+- **NVidia CUDA** (opcional, recomendado para aceleração VLM/docling)
+- **Dependências**: gerenciadas automaticamente via `pyproject.toml` e `uv`
+
+---
+
+## Instalação
+
+1. Instale o [uv](https://github.com/astral-sh/uv):
+
+   ```bash
+   pip install uv
+   ```
+
+2. Clone o repositório:
+
+   ```bash
+   git clone <repository-url>
+   cd pdf2md
+   ```
+
+3. Instale as dependências:
+
+   ```bash
+   uv sync
+   ```
+
+> **Dica:** Se você possui GPU NVidia com CUDA, o docling pode usar aceleração para modelos VLM.
+
+---
+
+## Uso
+
+1. Execute o pipeline:
+
+   ```bash
+   uv run main.py
+   ```
+
+2. Digite o caminho do PDF quando solicitado.
+
+3. O progresso será exibido na interface Rich.
+
+4. O Markdown final será salvo em `outputs/` com o mesmo nome do PDF original.
+
+---
+
+## Fluxo de Processamento
+
+1. **Validação**: Verifica se o PDF existe e está íntegro (PyMuPDF)
+2. **Chunking**: Divide o PDF em blocos de 10 páginas, salvos em `cache/`
+3. **Cache**: Verifica se cada chunk já foi convertido (diskcache + existência do `.md`)
+4. **Conversão**: Converte cada chunk para Markdown usando docling VLM GraniteDocling
+5. **Merge**: Junta todos os arquivos Markdown em um único arquivo final
+6. **Retomada**: Se interrompido, ao reiniciar, processa apenas os chunks pendentes
+
+---
+
+## Arquitetura Modular
+
+| Módulo                | Responsabilidade                                      |
+|-----------------------|------------------------------------------------------|
+| `validation.py`       | Validação de integridade do PDF                      |
+| `chunking.py`         | Divisão do PDF em chunks                             |
+| `cache_manager.py`    | Gerenciamento de cache persistente                   |
+| `conversion.py`       | Conversão PDF→Markdown com docling                   |
+| `merge.py`            | Merge dos arquivos Markdown                          |
+| `ui.py`               | Interface Rich para barra de progresso               |
+| `types.py`            | Tipos, dataclasses e aliases                         |
+| `main.py`             | Orquestra o pipeline completo                        |
+
+---
+
+## Dependências
+
+As dependências principais estão especificadas no `pyproject.toml`:
+
+- `diskcache >= 5.6.3`
+- `docling[vlm] >= 2.62.0`
+- `pymupdf >= 1.26.6`
+- `rich >= 14.2.0`
+
+---
+
+## FAQ
+
+**O pipeline retoma do ponto de parada?**  
+Sim. O sistema de cache persistente garante que, ao reiniciar, apenas os chunks pendentes sejam processados.
+
+**Preciso de GPU NVidia?**  
+Não é obrigatório, mas recomendado para aceleração do pipeline VLM/docling.
+
+**Posso usar outros chunk sizes?**  
+O padrão é 10 páginas por chunk, mas pode ser ajustado no código.
+
+**O pipeline funciona em Windows, Linux e macOS?**  
+Sim, desde que Python 3.13+ e as dependências estejam corretamente instaladas.
+
+---
+
+## Contribuindo
+
+Contribuições são bem-vindas!
+
+1. Fork o repositório
+2. Crie uma branch para sua feature ou correção
+3. Envie um Pull Request detalhado
+4. Adicione testes e documentação para novas funcionalidades
+
+---
+
+## Licença
+
+MIT License. Veja o arquivo [LICENSE](LICENSE) para detalhes.
+
+---
+
+## Agradecimentos
+
+- [Docling](https://github.com/docling-project/docling): Extração semântica e pipeline VLM GraniteDocling
+- [PyMuPDF](https://github.com/pymupdf/PyMuPDF): Manipulação e chunking de PDFs
+- [Rich](https://github.com/Textualize/rich): Interface CLI elegante
+- [DiskCache](https://github.com/grantjenks/python-diskcache): Cache persistente
+
+---
+
+## Links Úteis
+
+- [Documentação Docling](https://docling-project.github.io/docling/)
+- [Documentação PyMuPDF](https://pymupdf.readthedocs.io/)
+- [Documentação Rich](https://rich.readthedocs.io/)
+- [Documentação DiskCache](https://grantjenks.com/docs/diskcache/)
+- [uv — Python package manager](https://github.com/astral-sh/uv)
+</file>
+
+<file path=".gitignore">
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[codz]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+#  Usually these files are written by a python script from a template
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py.cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+.pybuilder/
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+#   For a library or package, you might want to ignore these files since the code is
+#   intended to run in multiple environments; otherwise, check them in:
+# .python-version
+
+# pipenv
+#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
+#   However, in case of collaboration, if having platform-specific dependencies or dependencies
+#   having no cross-platform support, pipenv may install dependencies that don't work, or not
+#   install all needed dependencies.
+#Pipfile.lock
+
+# UV
+#   Similar to Pipfile.lock, it is generally recommended to include uv.lock in version control.
+#   This is especially recommended for binary packages to ensure reproducibility, and is more
+#   commonly ignored for libraries.
+#uv.lock
+
+# poetry
+#   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
+#   This is especially recommended for binary packages to ensure reproducibility, and is more
+#   commonly ignored for libraries.
+#   https://python-poetry.org/docs/basic-usage/#commit-your-poetrylock-file-to-version-control
+#poetry.lock
+#poetry.toml
+
+# pdm
+#   Similar to Pipfile.lock, it is generally recommended to include pdm.lock in version control.
+#   pdm recommends including project-wide configuration in pdm.toml, but excluding .pdm-python.
+#   https://pdm-project.org/en/latest/usage/project/#working-with-version-control
+#pdm.lock
+#pdm.toml
+.pdm-python
+.pdm-build/
+
+# pixi
+#   Similar to Pipfile.lock, it is generally recommended to include pixi.lock in version control.
+#pixi.lock
+#   Pixi creates a virtual environment in the .pixi directory, just like venv module creates one
+#   in the .venv directory. It is recommended not to include this directory in version control.
+.pixi
+
+# PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.envrc
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# PyCharm
+#  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
+#  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
+#  and can be added to the global gitignore or merged into this file.  For a more nuclear
+#  option (not recommended) you can uncomment the following to ignore the entire idea folder.
+#.idea/
+
+# Abstra
+# Abstra is an AI-powered process automation framework.
+# Ignore directories containing user credentials, local state, and settings.
+# Learn more at https://abstra.io/docs
+.abstra/
+
+# Visual Studio Code
+#  Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore 
+#  that can be found at https://github.com/github/gitignore/blob/main/Global/VisualStudioCode.gitignore
+#  and can be added to the global gitignore or merged into this file. However, if you prefer, 
+#  you could uncomment the following to ignore the entire vscode folder
+# .vscode/
+
+# Ruff stuff:
+.ruff_cache/
+
+# PyPI configuration file
+.pypirc
+
+# Cursor
+#  Cursor is an AI-powered code editor. `.cursorignore` specifies files/directories to
+#  exclude from AI features like autocomplete and code analysis. Recommended for sensitive data
+#  refer to https://docs.cursor.com/context/ignore-files
+.cursorignore
+.cursorindexingignore
+
+# Marimo
+marimo/_static/
+marimo/_lsp/
+__marimo__/
+*.pdf
+*.md*.xml
+uv.lockmain.py
+</file>
+
+</files>

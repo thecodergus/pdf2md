@@ -1,25 +1,26 @@
 # Codemagus: Conversão PDF→Markdown com docling VLM granite_docling
-from pathlib import Path
-from .types import ChunkInfo, ChunkList
-from docling.datamodel import vlm_model_specs
+from .types import ChunkInfo
 from docling.datamodel.base_models import InputFormat
-from docling.datamodel.pipeline_options import VlmPipelineOptions
+from docling.datamodel.pipeline_options import PdfPipelineOptions, RapidOcrOptions
 from docling.document_converter import DocumentConverter, PdfFormatOption
-from docling.pipeline.vlm_pipeline import VlmPipeline
+
+
+ARTIFACTS_PATH: str = "/home/gustavo/.cache/docling/models"
 
 
 def configure_docling_converter() -> DocumentConverter:
     """
     Configura o conversor docling para pipeline VLM com modelo granite_docling.
     """
-    pipeline_options = VlmPipelineOptions(
-        vlm_options=vlm_model_specs.GRANITEDOCLING_TRANSFORMERS
+
+    pipeline_options = PdfPipelineOptions(artifacts_path=ARTIFACTS_PATH)
+    pipeline_options.ocr_options = RapidOcrOptions(
+        backend="torch",
     )
+
     return DocumentConverter(
         format_options={
-            InputFormat.PDF: PdfFormatOption(
-                pipeline_cls=VlmPipeline, pipeline_options=pipeline_options
-            )
+            InputFormat.PDF: PdfFormatOption(pipeline_options=pipeline_options)
         }
     )
 
