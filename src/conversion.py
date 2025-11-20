@@ -7,6 +7,7 @@ from docling.datamodel.pipeline_options_vlm_model import (
     ResponseFormat,
     InferenceFramework,
     TransformersModelType,
+    ApiVlmOptions,
 )
 from docling.datamodel.pipeline_options import (
     VlmPipelineOptions,
@@ -27,8 +28,16 @@ def configure_docling_converter() -> DocumentConverter:
     """
 
     pipeline_options: VlmPipelineOptions = VlmPipelineOptions(
-        vlm_options=InlineVlmOptions(
-            repo_id="Qwen/Qwen3-VL-8B-Instruct",
+        vlm_options=ApiVlmOptions(
+            url="http://localhost:11434/v1/chat/completions",  # Endpoint padrão Ollama local
+            params={
+                "model": "qwen3-vl:8b",  # Nome do modelo conforme registrado no Ollama
+                "temperature": 0.3,
+                "top_p": 0.8,
+                "top_k": 40,
+                "repeat_penalty": 1.1,  # Substitui presence_penalty
+                "max_tokens": 16384,  # Limite de tokens de saída
+            },
             prompt="""
                 Converta esta página ou documento para Markdown, preservando rigorosamente toda a estrutura, hierarquia e conteúdo original. Siga as especificações técnicas abaixo:
                 ## ESTRUTURA E HIERARQUIA
@@ -44,23 +53,9 @@ def configure_docling_converter() -> DocumentConverter:
                 - ```mermaid (para diagramas Mermaid)
                 - ```sql, ```yaml, ```json, ```html, ```css, etc.
                 - **Indentação:** Preserve a indentação e o espaçamento exatos do código, inclusive em exemplos Mermaid e listas aninhadas.
-            """,
+                """,
             response_format=ResponseFormat.MARKDOWN,
-            inference_framework=InferenceFramework.TRANSFORMERS,
-            transformers_model_type=TransformersModelType.AUTOMODEL_IMAGETEXTTOTEXT,
-            accelerator_options=AcceleratorOptions(device=AcceleratorDevice.CUDA),
-            supported_devices=[
-                AcceleratorDevice.CUDA,
-            ],
-            scale=2.0,
-            temperature=0.3,
-            top_p=0.8,
-            top_k=40,
-            presence_penalty=0.5,
-            out_seq_length=16384,
-            ocr_options=RapidOcrOptions(
-                backend="torch",
-            ),
+            timeout=300,  # Timeout ampliado para documentos extensos
         )
     )
 
