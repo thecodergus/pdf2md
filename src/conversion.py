@@ -55,8 +55,10 @@ def configure_docling_converter() -> DocumentConverter:
                 - **Indentação:** Preserve a indentação e o espaçamento exatos do código, inclusive em exemplos Mermaid e listas aninhadas.
                 """,
             response_format=ResponseFormat.MARKDOWN,
+            scale=1.0,
             timeout=300,  # Timeout ampliado para documentos extensos
-        )
+        ),
+        enable_remote_services=True,
     )
 
     return DocumentConverter(
