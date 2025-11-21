@@ -127,11 +127,12 @@ def __get_prompt() -> str:
         ```
         - Caracteres especiais: Use entidades HTML para escapar caracteres reservados:
         - `&quot;` para aspas duplas
-        - `&#124;` para pipe (|)
+        - `#124;` para pipe (|)
         - `&lt;` e `&gt;` para < e >
         - `&amp;` para &
         - `#59;` para ponto e vírgula
         - `#35;` para cerquilha (#)
+        - `#40;` e `#41;`  para parenteses 
         - Subgrafos: Use subgrafos para agrupar elementos relacionados quando apropriado.
         - Diagramas complexos: Para diagramas muito grandes, considere dividi-los em múltiplos diagramas Mermaid menores.
         - Diagramas ASCII: Se um diagrama não puder ser representado em Mermaid, preserve como ASCII art em blocos `text` ou `ascii`.
