@@ -29,12 +29,18 @@ def configure_docling_converter() -> DocumentConverter:
     - qwen3-vl:8b
     """
 
-    pipeline_options: VlmPipelineOptions = __options_openrouter(
-        "qwen/qwen2.5-vl-72b-instruct"
-    )
-    # pipeline_options: VlmPipelineOptions = __options_ollama(
-    #     "qwen3-vl:8b"
+    # pipeline_options: VlmPipelineOptions = __options_openrouter(
+    #     "qwen/qwen2.5-vl-72b-instruct"
     # )
+    pipeline_options: VlmPipelineOptions = __options_ollama(
+        # "qwen3-vl:8b"
+        # "gemma3:27b"
+        "mistral-small3.2:24b"
+        # "qwen3-vl:32b"
+        # "llava:34b"
+        # "granite3.2-vision:2b"
+        # "deepseek-ocr:3b"
+    )
 
     return DocumentConverter(
         format_options={
@@ -145,10 +151,55 @@ def __get_openrouter_api_key() -> str:
     return api_key
 
 
+def __options_lmstudio(model: str) -> VlmPipelineOptions:
+    """
+    Configuração do pipeline Docling para uso com LM Studio (API local OpenAI-compatible).
+    - Endpoint local, sem custo, privacidade total
+    - Parâmetros ajustados para performance local
+    - OCR multilíngue robusto
+    - Estrutura de tabelas avançada
+    """
+    return VlmPipelineOptions(
+        enable_remote_services=True,
+        do_formula_enrichment=True,
+        do_table_structure=True,
+        do_code_enrichment=True,
+        table_structure_options=TableStructureOptions(
+            do_cell_matching=True,
+            model_name="TableFormer++",
+        ),
+        vlm_options=ApiVlmOptions(
+            url="http://localhost:1234/v1/chat/completions",
+            params={
+                "model": model,
+                "temperature": 0.3,
+                "top_p": 0.8,
+                "top_k": 40,
+                "repeat_penalty": 1.1,
+                "max_tokens": 16384,
+            },
+            prompt=__get_prompt(),
+            response_format=ResponseFormat.MARKDOWN,
+            timeout=300,  # Timeout otimizado para local
+            ocr_options=RapidOcrOptions(
+                backend="paddle",
+                force_full_page_ocr=True,
+                lang=["portuguese", "english"],
+                print_verbose=True,
+            ),
+            headers={
+                "Content-Type": "application/json",
+                # "Authorization": "Bearer lm-studio",  # Opcional, só se quiser forçar compatibilidade
+            },
+        ),
+    )
+
+
 def __get_prompt() -> str:
     return """
         # INSTRUÇÃO CRÍTICA
-        Analise visualmente e converta este documento técnico para Markdown com FIDELIDADE ABSOLUTA. Reconstrua fielmente todos os elementos, preservando rigorosamente a estrutura, hierarquia e cada detalhe do conteúdo original.
+        - Analise e converta este documento para o formato Markdown com FIDELIDADE ABSOLUTA. 
+        - Reconstrua fielmente todos os elementos, preservando rigorosamente a estrutura, hierarquia e cada detalhe do conteúdo original.
 
         # REGRAS GERAIS
         - Não omita, resuma ou modifique nenhum conteúdo  
