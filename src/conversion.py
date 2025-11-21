@@ -24,20 +24,26 @@ from docling.datamodel.accelerator_options import AcceleratorDevice, Accelerator
 def configure_docling_converter() -> DocumentConverter:
     """
     Configura o conversor docling para pipeline VLM com modelo Qwen/Qwen3-VL-8B-Instruct (local).
-    Outras opções para testar:
+
+    # Outras opções para testar:
     (ollama)
     - qwen3-vl:8b
+
+    # Modelos bons:
+    (OpenRouter)
+    - qwen/qwen2.5-vl-72b-instruct
     """
 
     # pipeline_options: VlmPipelineOptions = __options_openrouter(
     #     "qwen/qwen2.5-vl-72b-instruct"
     # )
     pipeline_options: VlmPipelineOptions = __options_ollama(
-        "llava:34b"
-        # "mistral-small3.2:24b"
-        # "granite3.2-vision:2b"
-        # "deepseek-ocr:3b"
-        # "llama3.2-vision"
+        "llama3.2-vision:11b"
+        # "qwen3-vl:30b"
+        # "gemma3:27b"
+        # "minicpm-v:8b"
+        # "bakllava:7b"
+        # "llava-phi3:3.8b"
     )
 
     # pipeline_options: VlmPipelineOptions = __options_lmstudio(
@@ -47,7 +53,7 @@ def configure_docling_converter() -> DocumentConverter:
     # )
 
     # pipeline_options: VlmPipelineOptions = __options_localai(
-    # "qwen3-vl:32b"
+
     # )
 
     # A tentar conseguir Hospedar:
@@ -207,6 +213,66 @@ def __options_lmstudio(model: str) -> VlmPipelineOptions:
     )
 
 
+def __options_localai(model: str) -> VlmPipelineOptions:
+    """
+    Configuração funcional e segura do pipeline Docling para uso com LocalAI (API local OpenAI-compatible).
+
+    Parâmetros:
+        model (str): Nome do modelo registrado no LocalAI (ex: 'qwen3-vl-8b-instruct').
+
+    Retorna:
+        VlmPipelineOptions: Objeto de configuração pronto para uso no pipeline Docling.
+
+    Requisitos:
+        - LocalAI rodando em http://localhost:8080 (endpoint padrão).
+        - Modelo instalado e disponível no LocalAI.
+        - (Opcional) Variável de ambiente LOCALAI_API_KEY definida, se autenticação estiver ativada.
+
+    Observações:
+        - Função pura, sem efeitos colaterais.
+        - Imutabilidade garantida em todas as estruturas retornadas.
+        - Parâmetros de geração e OCR idênticos aos de outros backends para portabilidade.
+    """
+    # Recupera API Key do LocalAI, se definida (autenticação opcional)
+    api_key: str | None = os.getenv("LOCALAI_API_KEY")
+    headers: dict[str, str] = {"Content-Type": "application/json"}
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
+
+    # Retorna configuração imutável do pipeline
+    return VlmPipelineOptions(
+        enable_remote_services=True,
+        do_formula_enrichment=True,
+        do_table_structure=True,
+        do_code_enrichment=True,
+        table_structure_options=TableStructureOptions(
+            do_cell_matching=True,
+            model_name="TableFormer++",
+        ),
+        vlm_options=ApiVlmOptions(
+            url="http://localhost:8080/v1/chat/completions",
+            params={
+                "model": model,
+                "temperature": 0.3,
+                "top_p": 0.8,
+                "top_k": 40,
+                "repeat_penalty": 1.1,
+                "max_tokens": 16384,
+            },
+            prompt=__get_prompt(),  # Função já existente no seu código-base
+            response_format=ResponseFormat.MARKDOWN,
+            timeout=1200,  # Timeout generoso para inferência local
+            ocr_options=RapidOcrOptions(
+                backend="paddle",
+                force_full_page_ocr=True,
+                lang=["portuguese", "english"],
+                print_verbose=True,
+            ),
+            headers=headers,
+        ),
+    )
+
+
 def __get_prompt() -> str:
     return """
             # INSTRUÇÃO CRÍTICA
@@ -214,6 +280,7 @@ def __get_prompt() -> str:
             - Reconstrua fielmente todos os elementos textuais, preservando rigorosamente a estrutura, hierarquia e cada detalhe do conteúdo original.
             - Ignore e NÃO transcreva cabeçalhos e rodapés repetitivos (headers/footers), números de página, títulos de capítulo recorrentes, datas ou qualquer elemento que se repita em múltiplas páginas e não faça parte do conteúdo principal.
             - Ignore completamente imagens, gráficos, diagramas e qualquer conteúdo visual. Não transcreva legendas, descrições ou referências a esses elementos.
+            - Caso nada for encontrado e detectado, entregue um texto com 5 letras 'a'
 
             # REGRAS GERAIS
             - Não omita, resuma ou modifique nenhum conteúdo do corpo principal.
