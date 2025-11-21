@@ -29,7 +29,12 @@ def configure_docling_converter() -> DocumentConverter:
     - qwen3-vl:8b
     """
 
-    pipeline_options: VlmPipelineOptions = __options_openrouter()
+    pipeline_options: VlmPipelineOptions = __options_openrouter(
+        "qwen/qwen2.5-vl-72b-instruct"
+    )
+    # pipeline_options: VlmPipelineOptions = __options_ollama(
+    #     "qwen3-vl:8b"
+    # )
 
     return DocumentConverter(
         format_options={
@@ -40,7 +45,7 @@ def configure_docling_converter() -> DocumentConverter:
     )
 
 
-def __options_ollama() -> VlmPipelineOptions:
+def __options_ollama(model: str) -> VlmPipelineOptions:
     return VlmPipelineOptions(
         enable_remote_services=True,
         do_formula_enrichment=True,
@@ -54,7 +59,7 @@ def __options_ollama() -> VlmPipelineOptions:
         vlm_options=ApiVlmOptions(
             url="http://localhost:11434/v1/chat/completions",
             params={
-                "model": "qwen3-vl:8b",
+                "model": model,
                 "temperature": 0.3,
                 "top_p": 0.8,
                 "top_k": 40,
@@ -77,7 +82,7 @@ def __options_ollama() -> VlmPipelineOptions:
     )
 
 
-def __options_openrouter() -> VlmPipelineOptions:
+def __options_openrouter(model: str) -> VlmPipelineOptions:
     """
     Configuração funcional e segura do pipeline Docling para uso com OpenRouter.
     - Endpoint remoto autenticado
@@ -102,7 +107,7 @@ def __options_openrouter() -> VlmPipelineOptions:
         vlm_options=ApiVlmOptions(
             url="https://openrouter.ai/api/v1/chat/completions",
             params={
-                "model": "qwen/qwen2.5-vl-72b-instruct",  # Substitua por outro modelo OpenRouter se necessário
+                "model": model,  # Substitua por outro modelo OpenRouter se necessário
                 "temperature": 0.3,
                 "top_p": 0.8,
                 "top_k": 40,
@@ -158,7 +163,7 @@ def __get_prompt() -> str:
 
         ## Código e Blocos Técnicos  
         - Extraia todos os blocos de código, comandos de terminal, scripts e exemplos de qualquer linguagem
-        - Use fenced code blocks com a linguagem correta (ex: ```python, ```bash, ```mermaid)
+        - Use fenced code blocks com a linguagem correta (ex: ```python, ```bash, ```asm)
         - Preserve shebangs, comentários, docstrings, outputs de terminal, exemplos de erro e metadados
         - Mantenha a indentação e espaçamento exatos
 
@@ -170,14 +175,6 @@ def __get_prompt() -> str:
         - Converta todas as fórmulas para sintaxe LaTeX
         - Use `$...$` para inline e `$$...$$` para display
         - Não altere símbolos, índices, expoentes ou operadores
-
-        ## Diagramas e Representações Visuais (PRIORIDADE MÁXIMA)  
-        - **TODOS os diagramas, fluxogramas, esquemas e gráficos DEVEM ser convertidos para código Mermaid**
-        - **NUNCA use sintaxe de imagem Markdown para diagramas**
-        - Interprete o layout visual e escolha o tipo Mermaid apropriado (flowchart, sequenceDiagram, erDiagram, classDiagram, stateDiagram-v2, gantt, etc.)
-        - Use entidades HTML para escapar caracteres especiais dentro do Mermaid
-        - Se um diagrama for impossível de representar em Mermaid, preserve como ASCII art em bloco de código `text` ou `ascii`
-        - O código Mermaid gerado deve ser sintaticamente válido
 
         ## Listas, Citações e Outros Elementos
         - Mantenha listas ordenadas, não ordenadas, listas de tarefas e listas aninhadas com indentação correta
@@ -193,52 +190,6 @@ def __get_prompt() -> str:
 
         # INSTRUÇÃO EXTRA  
         Nunca deixe páginas vazias. Se não houver elementos estruturais, extraia todo o texto como parágrafos Markdown.
-
-        # EXEMPLOS DE MERMAID (PARA REFERÊNCIA)
-
-        ```mermaid
-        flowchart TD
-            A[Início] --> B{Condição}
-            B -->|Sim| C[Ação 1]
-            B -->|Não| D[Ação 2]
-            C --> E[Fim]
-            D --> E
-        ```
-        ```mermaid
-        sequenceDiagram
-            participant User
-            participant Server
-            User->>Server: Request data
-            Server-->>User: Return data
-        ```
-        ```mermaid
-        classDiagram
-            class User {
-                +String name
-                +login()
-            }
-            User <|-- Admin
-        ```
-        ```mermaid
-        erDiagram
-            CLIENTE ||--o{ PEDIDO : faz
-            CLIENTE {
-                int id PK
-                string nome
-            }
-            PEDIDO {
-                int id PK
-                date data
-            }
-        ```
-        ```mermaid
-        gantt
-            title Projeto Exemplo
-            dateFormat  YYYY-MM-DD
-            section Planejamento
-            Tarefa1 :a1, 2025-01-01, 10d
-            Tarefa2 :after a1, 5d
-        ```
 
         # OUTPUT ESPERADO  
         Apenas o conteúdo Markdown convertido, sem qualquer texto adicional, introdução ou conclusão.

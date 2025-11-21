@@ -34,20 +34,24 @@ class CacheManager:
         """
         self.cache[str(chunk.md_path)] = True
 
-    def clear_cache_parallel(self) -> None:
+    def clear_cache_parallel(self, chunks: ChunkList) -> None:
         """
-        Exclui todos os itens do cache de forma paralela utilizando multithreading.
-
-        Utiliza ThreadPoolExecutor para deletar cada chave do cache em threads separadas,
-        garantindo performance otimizada para operações I/O-bound.
-
-        :raises Exception: Propaga exceções ocorridas durante a exclusão.
+        Exclui todos os arquivos .md e .pdf dos chunks e limpa o cache associado, de forma paralela.
         """
+        file_paths = extract_file_paths_from_chunks(chunks)
         with ThreadPoolExecutor() as executor:
-            futures = [
-                executor.submit(self.cache.delete, key) for key in self.cache.iterkeys()
-            ]
+            # Exclusão paralela dos arquivos físicos
+            futures = {
+                executor.submit(delete_file_safe, path): path for path in file_paths
+            }
             for future in as_completed(futures):
+                path = futures[future]
+                result = future.result()
+            cache_keys = [str(chunk.md_path) for chunk in chunks]
+            cache_futures = [
+                executor.submit(self.cache.delete, key) for key in cache_keys
+            ]
+            for future in as_completed(cache_futures):
                 exception = future.exception()
                 if exception is not None:
                     raise exception
@@ -57,3 +61,22 @@ class CacheManager:
         Fecha o cache de forma segura.
         """
         self.cache.close()
+
+
+def extract_file_paths_from_chunks(chunks: ChunkList) -> list[Path]:
+    """
+    Função pura para extrair todos os caminhos .md e .pdf dos chunks.
+    """
+    return [chunk.md_path for chunk in chunks] + [chunk.pdf_path for chunk in chunks]
+
+
+def delete_file_safe(path: Path) -> bool:
+    """
+    Exclui um arquivo de forma segura, retornando True se sucesso, False se falha.
+    """
+    try:
+        if path.exists():
+            path.unlink()
+        return True
+    except (PermissionError, OSError, FileNotFoundError):
+        return False
