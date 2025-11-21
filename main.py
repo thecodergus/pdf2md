@@ -48,7 +48,7 @@ def main() -> None:
     cache.close()
 
     # Limpar
-    cache.clear_cache_parallel()
+    cache.clear_cache_parallel(chunks)
 
     # Merge final
     output_md = config.output_dir / f"{input_pdf.stem}.md"
