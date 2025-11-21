@@ -33,11 +33,8 @@ def configure_docling_converter() -> DocumentConverter:
     #     "qwen/qwen2.5-vl-72b-instruct"
     # )
     pipeline_options: VlmPipelineOptions = __options_ollama(
-        # "qwen3-vl:8b"
-        # "gemma3:27b"
-        "mistral-small3.2:24b"
-        # "qwen3-vl:32b"
-        # "llava:34b"
+        "llava:34b"
+        # "mistral-small3.2:24b"
         # "granite3.2-vision:2b"
         # "deepseek-ocr:3b"
         # "llama3.2-vision"
@@ -49,9 +46,13 @@ def configure_docling_converter() -> DocumentConverter:
     #     "allenai/olmocr-2-7b"
     # )
 
+    # pipeline_options: VlmPipelineOptions = __options_localai(
+    # "qwen3-vl:32b"
+    # )
+
     # A tentar conseguir Hospedar:
-    # DeepSeek‑VL
-    # GLM‑4.1V‑9B‑Thinking
+    # DeepSeek‑VL -> Não compatível com LM Studio, LocalAI e nem Ollama
+    # GLM‑4.1V‑9B‑Thinking -> Não compatível com LM Studio, LocalAI e nem Ollama
 
     return DocumentConverter(
         format_options={
@@ -208,76 +209,76 @@ def __options_lmstudio(model: str) -> VlmPipelineOptions:
 
 def __get_prompt() -> str:
     return """
-        # INSTRUÇÃO CRÍTICA
-        - Analise visualmente e converta este documento para Markdown com FIDELIDADE ABSOLUTA.
-        - Reconstrua fielmente todos os elementos textuais, preservando rigorosamente a estrutura, hierarquia e cada detalhe do conteúdo original.
-        - Ignore e NÃO transcreva cabeçalhos e rodapés repetitivos (headers/footers), números de página, títulos de capítulo recorrentes, datas ou qualquer elemento que se repita em múltiplas páginas e não faça parte do conteúdo principal.
-        - Ignore completamente imagens, gráficos, diagramas e qualquer conteúdo visual. Não transcreva legendas, descrições ou referências a esses elementos.
+            # INSTRUÇÃO CRÍTICA
+            - Analise visualmente e converta este documento para Markdown com FIDELIDADE ABSOLUTA.
+            - Reconstrua fielmente todos os elementos textuais, preservando rigorosamente a estrutura, hierarquia e cada detalhe do conteúdo original.
+            - Ignore e NÃO transcreva cabeçalhos e rodapés repetitivos (headers/footers), números de página, títulos de capítulo recorrentes, datas ou qualquer elemento que se repita em múltiplas páginas e não faça parte do conteúdo principal.
+            - Ignore completamente imagens, gráficos, diagramas e qualquer conteúdo visual. Não transcreva legendas, descrições ou referências a esses elementos.
 
-        # REGRAS GERAIS
-        - Não omita, resuma ou modifique nenhum conteúdo do corpo principal.
-        - Mantenha a ordem, posicionamento e formatação exatos de todos os elementos.
-        - O resultado deve ser apenas o conteúdo Markdown convertido, sem explicações extras, comentários ou outputs duplicados.
+            # REGRAS GERAIS
+            - Não omita, resuma ou modifique nenhum conteúdo do corpo principal.
+            - Mantenha a ordem, posicionamento e formatação exatos de todos os elementos.
+            - O resultado deve ser apenas o conteúdo Markdown convertido, sem explicações extras, comentários ou outputs duplicados.
 
-        # ESPECIFICAÇÕES DE CONVERSÃO
+            # ESPECIFICAÇÕES DE CONVERSÃO
 
-        ## Estrutura e Hierarquia
-        - Converta todos os títulos e subtítulos para cabeçalhos Markdown, mantendo a hierarquia original sem pular níveis.
-        - Preserve a ordem de leitura e posicionamento dos elementos.
+            ## Estrutura e Hierarquia
+            - Converta todos os títulos e subtítulos para cabeçalhos Markdown, mantendo a hierarquia original sem pular níveis.
+            - Preserve a ordem de leitura e posicionamento dos elementos.
 
-        ## Código e Blocos Técnicos
-        - Extraia todos os blocos de código, comandos de terminal, scripts e exemplos de qualquer linguagem.
-        - Use fenced code blocks com a linguagem correta (ex: ```python, ```bash, ```asm).
-        - Preserve shebangs, comentários, docstrings, outputs de terminal, exemplos de erro e metadados.
-        - Mantenha a indentação e espaçamento exatos.
+            ## Código e Blocos Técnicos
+            - Extraia todos os blocos de código, comandos de terminal, scripts e exemplos de qualquer linguagem.
+            - Use fenced code blocks com a linguagem correta (ex: ```python, ```bash, ```asm).
+            - Preserve shebangs, comentários, docstrings, outputs de terminal, exemplos de erro e metadados.
+            - Mantenha a indentação e espaçamento exatos.
 
-        ## Tabelas
-        - Converta tabelas simples para Markdown (pipe tables), mantendo cabeçalhos, alinhamento e formatação.
-        - Para tabelas complexas (células mescladas, múltiplos cabeçalhos), use HTML (<table>, <tr>, <td>, <th>).
-        - Escape pipes (|) em células de tabela usando `&#124;` quando necessário.
+            ## Tabelas
+            - Converta tabelas simples para Markdown (pipe tables), mantendo cabeçalhos, alinhamento e formatação.
+            - Para tabelas complexas (células mescladas, múltiplos cabeçalhos), use HTML (<table>, <tr>, <td>, <th>).
+            - Escape pipes (|) em células de tabela usando `&#124;` quando necessário.
 
-        ## Fórmulas Matemáticas
-        - Converta todas as fórmulas para sintaxe LaTeX.
-        - Use `$...$` para inline e `$$...$$` para display.
-        - Não altere símbolos, índices, expoentes ou operadores.
-        - Escape underscores (_) e asteriscos (*) em fórmulas quando necessário.
+            ## Fórmulas Matemáticas
+            - Converta todas as fórmulas para sintaxe LaTeX.
+            - Use `$...$` para inline e `$$...$$` para display.
+            - Não altere símbolos, índices, expoentes ou operadores.
+            - Escape underscores (_) e asteriscos (*) em fórmulas quando necessário.
 
-        ## Listas, Citações e Outros Elementos
-        - Mantenha listas ordenadas, não ordenadas, listas de tarefas e listas aninhadas com indentação correta.
-        - Preserve blocos de citação, links, notas de rodapé e HTML embutido.
+            ## Listas, Citações e Outros Elementos
+            - Mantenha listas ordenadas, não ordenadas, listas de tarefas e listas aninhadas com indentação correta.
+            - Preserve blocos de citação, links, notas de rodapé e HTML embutido.
 
-        ## Outputs, Erros e Metadados
-        - Preserve outputs de terminal, exemplos de erro, tracebacks, logs e metadados.
+            ## Outputs, Erros e Metadados
+            - Preserve outputs de terminal, exemplos de erro, tracebacks, logs e metadados.
 
-        ## Elementos Avançados
-        - Use `---` para linhas horizontais.
-        - Preserve quebras de linha e parágrafos.
-        - Aplique escapes onde necessário.
+            ## Elementos Avançados
+            - Use `---` para linhas horizontais.
+            - Preserve quebras de linha e parágrafos.
+            - Aplique escapes onde necessário.
 
-        # INSTRUÇÃO EXTRA
-        Nunca deixe páginas vazias. Se não houver elementos estruturais, extraia todo o texto como parágrafos Markdown.
+            # INSTRUÇÃO EXTRA
+            Nunca deixe páginas vazias. Se não houver elementos estruturais, extraia todo o texto como parágrafos Markdown.
 
-        # EXEMPLOS DE SINTAXE
+            # EXEMPLOS DE SINTAXE
 
-        ## Tabela Markdown:
-        | Coluna 1 | Coluna 2 |
-        |----------|----------|
-        | Valor A  | Valor B  |
+            ## Tabela Markdown:
+            | Coluna 1 | Coluna 2 |
+            |----------|----------|
+            | Valor A  | Valor B  |
 
-        ## Código Python:
-        ```python
-        def exemplo():
-            print("Olá, mundo!")
-        ```
+            ## Código Python:
+            ```python
+            def exemplo():
+                print("Olá, mundo!")
+            ```
 
-        ## Fórmula Matemática:
-        Inline: $E = mc^2$
-        Display:
-        $$\int_{a}^{b} f(x) dx = F(b) - F(a)$$
+            ## Fórmula Matemática:
+            Inline: $E = mc^2$
+            Display:
+            $$int_{a}^{b} f(x) dx = F(b) - F(a)$$
 
-        # OUTPUT ESPERADO
-        Apenas o conteúdo Markdown convertido, sem qualquer texto adicional, introdução ou conclusão.
-        """
+            # OUTPUT ESPERADO
+            Apenas o conteúdo Markdown convertido, sem qualquer texto adicional, introdução ou conclusão.
+            """
 
 
 def convert_chunk_to_markdown(chunk: ChunkInfo, converter: DocumentConverter) -> None:
