@@ -25,35 +25,55 @@ def configure_docling_converter() -> DocumentConverter:
     """
     Configura o conversor docling para pipeline VLM com modelo Qwen/Qwen3-VL-8B-Instruct (local).
 
-    # Outras opções para testar:
-    (ollama)
-    - qwen3-vl:8b
-
     # Modelos bons:
     (OpenRouter)
     - qwen/qwen2.5-vl-72b-instruct
+    - qwen/qwen3-vl-235b-a22b-instruct
+
+    (Ollama)
+    -
+
+    (LM Studio)
+    -
+
+    (LocalAI)
+    -
+
+    # Modelos Medios
+    (Ollama)
+    - minicpm-v:8b (talvez melhorar o prompt ou aumentando o chunk de paginas melhore o resultado)
+
+    (LM Studio)
+    -
+
+    (LocalAI)
+    -
     """
 
     # pipeline_options: VlmPipelineOptions = __options_openrouter(
     #     "qwen/qwen2.5-vl-72b-instruct"
+    #      "qwen/qwen3-vl-30b-a3b-instruct"
+    #      "nvidia/nemotron-nano-12b-v2-vl"
+    #      "opengvlab/internvl3-78b"
+    #      "deepcogito/cogito-v2-preview-llama-109b-moe"
+    #      "baidu/ernie-4.5-vl-28b-a3b"
+    #      "openai/gpt-5-nano"
     # )
     pipeline_options: VlmPipelineOptions = __options_ollama(
-        "llama3.2-vision:11b"
-        # "qwen3-vl:30b"
-        # "gemma3:27b"
-        # "minicpm-v:8b"
-        # "bakllava:7b"
+        "bakllava:7b"
         # "llava-phi3:3.8b"
     )
 
     # pipeline_options: VlmPipelineOptions = __options_lmstudio(
+    #     "prithivMLmods/granite-docling-258M-f32-GGUF"
+    #     "allenai/olmocr-2-7b"
     #     "Jerry666/GOT-OCR2_0-716M-BF16-GGUF"  # GOT-OCR2
     #     "DevQuasar/falcon2-11B-GGUF"
-    #     "allenai/olmocr-2-7b"
+    #     "lmstudio-community/pixtral-12b-GGUF"
     # )
 
     # pipeline_options: VlmPipelineOptions = __options_localai(
-
+    #   "pocketdoc_dans-personalityengine-v1.2.0-24b"
     # )
 
     # A tentar conseguir Hospedar:
@@ -275,77 +295,106 @@ def __options_localai(model: str) -> VlmPipelineOptions:
 
 def __get_prompt() -> str:
     return """
-            # INSTRUÇÃO CRÍTICA
-            - Analise visualmente e converta este documento para Markdown com FIDELIDADE ABSOLUTA.
-            - Reconstrua fielmente todos os elementos textuais, preservando rigorosamente a estrutura, hierarquia e cada detalhe do conteúdo original.
-            - Ignore e NÃO transcreva cabeçalhos e rodapés repetitivos (headers/footers), números de página, títulos de capítulo recorrentes, datas ou qualquer elemento que se repita em múltiplas páginas e não faça parte do conteúdo principal.
-            - Ignore completamente imagens, gráficos, diagramas e qualquer conteúdo visual. Não transcreva legendas, descrições ou referências a esses elementos.
-            - Caso nada for encontrado e detectado, entregue um texto com 5 letras 'a'
+# INSTRUÇÃO CRÍTICA (PROCESSO MODULAR EM 7 ETAPAS)
 
-            # REGRAS GERAIS
-            - Não omita, resuma ou modifique nenhum conteúdo do corpo principal.
-            - Mantenha a ordem, posicionamento e formatação exatos de todos os elementos.
-            - O resultado deve ser apenas o conteúdo Markdown convertido, sem explicações extras, comentários ou outputs duplicados.
+## ETAPA 1: ANÁLISE VISUAL E ESTRUTURAL
+- Analise visualmente a página PDF fornecida.
+- Identifique todos os blocos de texto, títulos, listas, tabelas, fórmulas, blocos de código e outros elementos estruturais.
 
-            # ESPECIFICAÇÕES DE CONVERSÃO
+## ETAPA 2: SUPRESSÃO DE CABEÇALHOS E RODAPÉS (HEADERS/FOOTERS)
+- NÃO transcreva nenhum elemento que:
+  + Apareça no topo ou rodapé da página, separado do corpo principal.
+  + Contenha números de página, datas, títulos de capítulo, nomes de autor, logotipos ou qualquer texto repetido em múltiplas páginas.
+  + Tenha formatação menor, alinhamento à esquerda/direita, ou esteja isolado por linhas/espaçamento.
+- Exemplos de headers/footers a IGNORAR:
+  + "Capítulo 2", "Página 15", "Janeiro 2025", "Manual Técnico", "www.empresa.com"
+- Se identificar um bloco suspeito, priorize a exclusão. Na dúvida, NÃO transcreva.
 
-            ## Estrutura e Hierarquia
-            - Converta todos os títulos e subtítulos para cabeçalhos Markdown, mantendo a hierarquia original sem pular níveis.
-            - Preserve a ordem de leitura e posicionamento dos elementos.
+## ETAPA 3: VALIDAÇÃO DE HIERARQUIA (TÍTULOS E SUBTÍTULOS)
+- Só converta um bloco para cabeçalho Markdown (ex: #, ##, ###) se TODOS os 3 critérios abaixo forem atendidos:
+  1. **Tamanho de fonte visivelmente maior** que o texto corrido.
+  2. **Destaque visual claro** (negrito, sublinhado, centralizado, ou espaçamento extra acima/abaixo).
+  3. **Isolamento**: o bloco está separado do texto anterior e posterior (não é continuação de parágrafo).
+- Se o início da página for apenas texto corrido, NÃO promova a título. Mantenha como parágrafo.
+- Exemplos negativos:
+  + Página inicia com "O sistema proposto apresenta..." → NÃO é título, converta como parágrafo.
+- Exemplos positivos:
+  + Texto centralizado, grande, negrito: "3. Resultados Experimentais" → Converta para cabeçalho Markdown.
 
-            ## Código e Blocos Técnicos
-            - Extraia todos os blocos de código, comandos de terminal, scripts e exemplos de qualquer linguagem.
-            - Use fenced code blocks com a linguagem correta (ex: ```python, ```bash, ```asm).
-            - Preserve shebangs, comentários, docstrings, outputs de terminal, exemplos de erro e metadados.
-            - Mantenha a indentação e espaçamento exatos.
+## ETAPA 4: CONVERSÃO ESTRUTURADA PARA MARKDOWN
+- Siga as regras abaixo para cada elemento:
+  + **Títulos/Subtítulos**: Use cabeçalhos Markdown (#, ##, ###) conforme hierarquia validada.
+  + **Parágrafos**: Mantenha como texto simples, preservando ordem e espaçamento.
+  + **Blocos de código**: Use fenced code blocks com linguagem correta (ex: ```python).
+  + **Tabelas simples**: Use pipe tables Markdown. Tabelas complexas: use HTML (<table>).
+  + **Fórmulas matemáticas**: Converta para LaTeX ($...$ inline, $$...$$ display).
+  + **Listas**: Mantenha ordenação e indentação.
+  + **Citações, links, notas de rodapé**: Preserve formatação.
+  + **Outputs, erros, logs**: Preserve integralmente.
+  + **Linhas horizontais**: Use `---`.
+  + **Quebras de linha e parágrafos**: Preserve.
+  + **Aplique escapes** onde necessário.
+- Ignore completamente imagens, gráficos, diagramas, legendas e referências visuais.
 
-            ## Tabelas
-            - Converta tabelas simples para Markdown (pipe tables), mantendo cabeçalhos, alinhamento e formatação.
-            - Para tabelas complexas (células mescladas, múltiplos cabeçalhos), use HTML (<table>, <tr>, <td>, <th>).
-            - Escape pipes (|) em células de tabela usando `&#124;` quando necessário.
+## ETAPA 5: DETECÇÃO E REMOÇÃO DE REPETIÇÕES INTERNAS
+- Após converter a página para Markdown, revise o texto resultante.
+- **Detecte e remova qualquer trecho, frase ou parágrafo repetido consecutivamente mais de uma vez na mesma página.**
+  + Considere como repetição qualquer sequência de 12 palavras ou mais que ocorra 2 vezes ou mais, mesmo com pequenas variações.
+  + Utilize análise de n-gramas (8-12 palavras) e rolling hash para identificar repetições.
+  + Ignore repetições legítimas em tabelas, listas ou estruturas de código.
+- **Remova todas as repetições, mantendo apenas a primeira ocorrência de cada trecho.**
+- Se identificar um padrão de repetição que se estende indefinidamente (loop), interrompa a repetição, limpe o texto e continue normalmente.
+- Exemplos de repetição a remover:
+  + "sem aplicação de questionários, grupos focal ou outras formas de coleta dirigida de dados, sem aplicação de questionários, grupos focal ou outras formas de coleta dirigida de dados, ..." → Mantenha apenas a primeira ocorrência.
 
-            ## Fórmulas Matemáticas
-            - Converta todas as fórmulas para sintaxe LaTeX.
-            - Use `$...$` para inline e `$$...$$` para display.
-            - Não altere símbolos, índices, expoentes ou operadores.
-            - Escape underscores (_) e asteriscos (*) em fórmulas quando necessário.
+## ETAPA 6: VALIDAÇÃO FINAL (CHECKLIST)
+- Antes de finalizar, valide:
+  1. Nenhum header/footer foi transcrito.
+  2. Nenhum texto corrido foi promovido a título sem atender aos 3 critérios.
+  3. Não há frases, sentenças ou parágrafos repetidos consecutivamente na saída final.
+  4. Ordem, formatação e hierarquia estão fiéis ao original.
+  5. Se a página não contiver elementos estruturais, extraia todo o texto como parágrafos Markdown.
+  6. Se absolutamente nada for detectado, retorne apenas: `aaaaa`
 
-            ## Listas, Citações e Outros Elementos
-            - Mantenha listas ordenadas, não ordenadas, listas de tarefas e listas aninhadas com indentação correta.
-            - Preserve blocos de citação, links, notas de rodapé e HTML embutido.
+## ETAPA 7: LOGGING E CONTINUIDADE
+- Se uma repetição crítica for detectada e removida, registre internamente (log) a ocorrência para auditoria e melhoria contínua.
+- Após a limpeza, continue normalmente a conversão das próximas páginas, sem interromper o fluxo.
 
-            ## Outputs, Erros e Metadados
-            - Preserve outputs de terminal, exemplos de erro, tracebacks, logs e metadados.
+# EXEMPLOS DE CASOS COMUNS
 
-            ## Elementos Avançados
-            - Use `---` para linhas horizontais.
-            - Preserve quebras de linha e parágrafos.
-            - Aplique escapes onde necessário.
+## Exemplo de repetição a remover:
+Página:
+"sem aplicação de questionários, grupos focal ou outras formas de coleta dirigida de dados, sem aplicação de questionários, grupos focal ou outras formas de coleta dirigida de dados, ..."
+→ Markdown:
+"sem aplicação de questionários, grupos focal ou outras formas de coleta dirigida de dados, ..."
 
-            # INSTRUÇÃO EXTRA
-            Nunca deixe páginas vazias. Se não houver elementos estruturais, extraia todo o texto como parágrafos Markdown.
+## Exemplo Negativo (texto corrido no início):
+Página:
+"O objetivo deste trabalho é apresentar..."
+→ Markdown:
+O objetivo deste trabalho é apresentar...
 
-            # EXEMPLOS DE SINTAXE
+## Exemplo Positivo (título real):
+Página:
+[Centralizado, grande, negrito]
+"2. Metodologia"
+→ Markdown:
+## 2. Metodologia
 
-            ## Tabela Markdown:
-            | Coluna 1 | Coluna 2 |
-            |----------|----------|
-            | Valor A  | Valor B  |
+## Exemplo de header/footer a ignorar:
+Página:
+[Topo] "Manual Técnico" [Rodapé] "Página 12"
+→ Markdown:
+[Não transcrever nada desses elementos]
 
-            ## Código Python:
-            ```python
-            def exemplo():
-                print("Olá, mundo!")
-            ```
+# REGRAS GERAIS
+- Não omita, resuma ou modifique nenhum conteúdo do corpo principal.
+- Mantenha a ordem, posicionamento e formatação exatos de todos os elementos.
+- O resultado deve ser apenas o conteúdo Markdown convertido, sem explicações extras, comentários ou outputs duplicados.
 
-            ## Fórmula Matemática:
-            Inline: $E = mc^2$
-            Display:
-            $$int_{a}^{b} f(x) dx = F(b) - F(a)$$
-
-            # OUTPUT ESPERADO
-            Apenas o conteúdo Markdown convertido, sem qualquer texto adicional, introdução ou conclusão.
-            """
+# OUTPUT ESPERADO
+Apenas o conteúdo Markdown convertido, sem qualquer texto adicional, introdução ou conclusão.
+"""
 
 
 def convert_chunk_to_markdown(chunk: ChunkInfo, converter: DocumentConverter) -> None:
