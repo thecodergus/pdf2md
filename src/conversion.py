@@ -60,7 +60,8 @@ def configure_docling_converter() -> DocumentConverter:
     #      "openai/gpt-5-nano"
     # )
     pipeline_options: VlmPipelineOptions = __options_ollama(
-        "bakllava:7b"
+        "minicpm-v:8b"
+        # "bakllava:7b"
         # "llava-phi3:3.8b"
     )
 
@@ -377,9 +378,9 @@ O objetivo deste trabalho é apresentar...
 ## Exemplo Positivo (título real):
 Página:
 [Centralizado, grande, negrito]
-"2. Metodologia"
+"2.2. Metodologia"
 → Markdown:
-## 2. Metodologia
+## 2.2. Metodologia
 
 ## Exemplo de header/footer a ignorar:
 Página:
