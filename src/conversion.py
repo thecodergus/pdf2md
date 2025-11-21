@@ -43,8 +43,11 @@ def __options_ollama() -> VlmPipelineOptions:
         enable_remote_services=True,
         do_formula_enrichment=True,
         do_table_structure=True,
+        do_code_enrichment=True,
+        # do_picture_description=True,
         table_structure_options=TableStructureOptions(
             do_cell_matching=True,
+            model_name="TableFormer++",
         ),
         vlm_options=ApiVlmOptions(
             url="http://localhost:11434/v1/chat/completions",
@@ -60,7 +63,7 @@ def __options_ollama() -> VlmPipelineOptions:
             response_format=ResponseFormat.MARKDOWN,
             timeout=1_200,
             ocr_options=RapidOcrOptions(
-                backend="torch",
+                backend="paddle",
                 force_full_page_ocr=True,
                 lang=[
                     "portuguese",

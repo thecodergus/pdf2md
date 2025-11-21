@@ -3,7 +3,7 @@ name = "pdf2md"
 version = "0.1.0"
 description = "Transformar PDF em Markdown com qualidade e eficiência"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.12"
 dependencies = [
     "diskcache>=5.6.3",
     "docling[vlm]>=2.63.0",
@@ -12,4 +12,5 @@ dependencies = [
     "pymupdf>=1.26.6",
     "python-dotenv>=1.2.1",
     "rich>=14.2.0",
+    "paddlepaddle-gpu>=2.6.2"
 ]
