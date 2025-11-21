@@ -142,107 +142,60 @@ def __get_openrouter_api_key() -> str:
 
 def __get_prompt() -> str:
     return """
-        Converta esta página ou documento para Markdown, preservando rigorosamente toda a estrutura, hierarquia e conteúdo original, incluindo fórmulas matemáticas, tabelas (simples e complexas), blocos de código de múltiplas linguagens, shebangs, comentários, outputs de terminal, metadados, diagramas ASCII, exemplos de erros, listas, citações, links, notas de rodapé, HTML embutido e qualquer outro elemento técnico. Siga as especificações técnicas abaixo:
+        # INSTRUÇÃO CRÍTICA
+        Analise visualmente e converta este documento técnico para Markdown com FIDELIDADE ABSOLUTA. Reconstrua fielmente todos os elementos, preservando rigorosamente a estrutura, hierarquia e cada detalhe do conteúdo original.
 
-        # ESTRUTURA E HIERARQUIA
-        - Cabeçalhos: Detecte e converta TODOS os títulos e subtítulos para o nível correto de cabeçalho Markdown (#, ##, ###, ####, #####, ######), mantendo a hierarquia original sem pular níveis.
-        - Ordem de leitura: Mantenha exatamente a mesma sequência e posicionamento de todos os elementos do documento.
+        # REGRAS GERAIS
+        - Não omita, resuma ou modifique nenhum conteúdo  
+        - Mantenha a ordem, posicionamento e formatação exatos de todos os elementos  
+        - O resultado deve ser apenas o conteúdo Markdown convertido, sem explicações extras
 
-        # CÓDIGO E BLOCOS TÉCNICOS
-        - Blocos de código: Extraia TODOS os blocos de código, comandos de terminal, trechos de configuração, scripts e exemplos de qualquer linguagem (Python, TypeScript, Bash, Assembly, SQL, HTML, CSS, JSON, YAML, TOML, INI, Dockerfile, Makefile, etc.).
-        - Identificação de linguagem: Use fenced code blocks (três backticks) especificando corretamente a linguagem:
-        - ```python (para Python)
-        - ```typescript (para TypeScript/JavaScript)
-        - ```bash (para terminal/shell)
-        - ```assembly (para Assembly)
-        - ```mermaid (para diagramas Mermaid)
-        - ```r, ```sql, ```yaml, ```json, ```html, ```css, ```ini, ```toml, ```dockerfile, ```makefile, ```xml, ```c, ```cpp, ```java, ```go, ```rust, etc.
-        - Shebangs: Preserve linhas shebang no início de scripts (ex: #!/usr/bin/env python3, #!/bin/bash).
-        - Comentários e docstrings: Preserve TODOS os comentários de linha, comentários de bloco, docstrings e anotações de tipo.
-        - Indentação: Preserve a indentação e o espaçamento exatos do código, inclusive em exemplos Mermaid, listas aninhadas, diagramas em texto e chunks de código R Markdown.
+        # ESPECIFICAÇÕES DE CONVERSÃO
 
-        # TABELAS
-        - Tabelas simples: Converta para a sintaxe Markdown (pipe tables), mantendo cabeçalhos, alinhamento, conteúdo das células e formatação.
-        - Tabelas complexas: Utilize HTML (`<table>`, `<tr>`, `<td>`, `<th>`) para tabelas com células mescladas, múltiplos níveis de cabeçalho ou formatação especial.
-        - Alinhamento: Mantenha alinhamento à esquerda, direita ou centro usando `:---`, `---:` ou `:---:`.
+        ## Estrutura e Hierarquia  
+        - Converta todos os títulos e subtítulos para cabeçalhos Markdown, mantendo a hierarquia original sem pular níveis
+        - Preserve a ordem de leitura e posicionamento dos elementos
 
-        # FÓRMULAS MATEMÁTICAS
-        - Fórmulas inline: Preserve usando sintaxe LaTeX `$...$` (ex: `$E = mc^2$`).
-        - Fórmulas display: Preserve usando sintaxe LaTeX `$$...$$` para fórmulas centralizadas.
-        - Símbolos especiais: Não altere símbolos, índices, expoentes, operadores, frações, integrais ou matrizes.
-        - Escapes: Aplique escapes necessários para evitar conflitos de sintaxe Markdown.
+        ## Código e Blocos Técnicos  
+        - Extraia todos os blocos de código, comandos de terminal, scripts e exemplos de qualquer linguagem
+        - Use fenced code blocks com a linguagem correta (ex: ```python, ```bash, ```mermaid)
+        - Preserve shebangs, comentários, docstrings, outputs de terminal, exemplos de erro e metadados
+        - Mantenha a indentação e espaçamento exatos
 
-        # DIAGRAMAS E REPRESENTAÇÕES VISUAIS EM MERMAID
-        - CONVERSÃO OBRIGATÓRIA: TODOS os diagramas, fluxogramas, esquemas, gráficos e representações visuais devem ser convertidos para código Mermaid usando fenced code blocks. NUNCA use a sintaxe padrão de imagens Markdown `` para diagramas.
-        - IDENTIFICAÇÃO DO TIPO DE DIAGRAMA: Analise o conteúdo visual e escolha o tipo Mermaid apropriado:
-        - Fluxogramas/Processos: `flowchart TD` ou `flowchart LR`
-        - Interações/APIs: `sequenceDiagram`
-        - Banco de dados: `erDiagram`
-        - Classes/OOP: `classDiagram`
-        - Estados: `stateDiagram-v2`
-        - Cronogramas: `gantt`
-        - Proporções: `pie`
-        - Jornadas de usuário: `journey`
-        - Versionamento: `gitGraph`
-        - Arquitetura: `C4Context`, `C4Container`, etc.
-        - Mapas mentais: `mindmap`
-        - Cronologias: `timeline`
-        - Fluxos quantitativos: `sankey-beta`
-        - Categorização: `quadrantChart`
-        - Formato obrigatório: Use blocos de código delimitados por três crases:
-        ```mermaid
-        flowchart TD
-            A[Início] --> B{Decisão}
-            B -->|Sim| C[Ação 1]
-            B -->|Não| D[Ação 2]
-            C --> E[Fim]
-            D --> E
-        ```
-        - Caracteres especiais: Use entidades HTML para escapar caracteres reservados:
-        - `&quot;` para aspas duplas
-        - `#124;` para pipe (|)
-        - `&lt;` e `&gt;` para < e >
-        - `&amp;` para &
-        - `#59;` para ponto e vírgula
-        - `#35;` para cerquilha (#)
-        - `#40;` e `#41;`  para parenteses 
-        - Subgrafos: Use subgrafos para agrupar elementos relacionados quando apropriado.
-        - Diagramas complexos: Para diagramas muito grandes, considere dividi-los em múltiplos diagramas Mermaid menores.
-        - Diagramas ASCII: Se um diagrama não puder ser representado em Mermaid, preserve como ASCII art em blocos `text` ou `ascii`.
-        - Validação: Todos os diagramas Mermaid gerados devem ser sintaticamente válidos.
-        - DICA: Priorize a estrutura lógica e semântica do diagrama, não a reprodução visual pixel a pixel.
+        ## Tabelas
+        - Converta tabelas simples para Markdown (pipe tables), mantendo cabeçalhos, alinhamento e formatação
+        - Para tabelas complexas (células mescladas, múltiplos cabeçalhos), use HTML (<table>, <tr>, <td>, <th>)
 
-        ## LISTAS, CITAÇÕES E OUTROS ELEMENTOS
-        - Listas: Mantenha listas ordenadas (1. 2. 3.), não ordenadas (- * +), listas de tarefas (- [ ] - [x]) e listas aninhadas, usando a indentação correta.
-        - Citações: Preserve todos os blocos de citação, inclusive citações aninhadas, usando o símbolo `>` conforme o nível.
-        - Links: Preserve todos os links, tanto inline `[texto](URL)` quanto referência `[texto][ref]`, sem modificar URLs.
-        - Notas de rodapé: Use a sintaxe Markdown para notas de rodapé `[^1]` e definições `[^1]: Texto da nota`.
-        - HTML embutido: Preserve qualquer HTML embutido (ex: `<dl>`, `<dt>`, `<dd>`, `<table>`, `<span>`, `<div>`, etc.) caso não seja possível converter para Markdown puro.
+        ## Fórmulas Matemáticas
+        - Converta todas as fórmulas para sintaxe LaTeX
+        - Use `$...$` para inline e `$$...$$` para display
+        - Não altere símbolos, índices, expoentes ou operadores
 
-        ## OUTPUTS, ERROS E METADADOS
-        - Outputs de terminal: Preserve exemplos de execução, logs, outputs de compilação e resultados de comandos, mantendo prompts ($, >>>, #), espaçamento e formatação originais.
-        - Exemplos de erro: Preserve tracebacks, mensagens de exceção, warnings e outputs de erro exatamente como aparecem.
-        - Metadados: Preserve cabeçalhos de arquivo, informações de versão, autor, licença, data, permissões e disclaimers.
+        ## Diagramas e Representações Visuais (PRIORIDADE MÁXIMA)  
+        - **TODOS os diagramas, fluxogramas, esquemas e gráficos DEVEM ser convertidos para código Mermaid**
+        - **NUNCA use sintaxe de imagem Markdown para diagramas**
+        - Interprete o layout visual e escolha o tipo Mermaid apropriado (flowchart, sequenceDiagram, erDiagram, classDiagram, stateDiagram-v2, gantt, etc.)
+        - Use entidades HTML para escapar caracteres especiais dentro do Mermaid
+        - Se um diagrama for impossível de representar em Mermaid, preserve como ASCII art em bloco de código `text` ou `ascii`
+        - O código Mermaid gerado deve ser sintaticamente válido
 
-        ## ELEMENTOS AVANÇADOS
-        - Linhas horizontais: Use três ou mais hífens `---` para separar seções.
-        - Quebras de linha: Preserve quebras de linha e parágrafos conforme o original.
-        - Caracteres especiais: Aplique escapes onde necessário para evitar conflitos de sintaxe, especialmente em fórmulas, tabelas e código.
-        - Blocos de configuração: Preserve arquivos de configuração (pyproject.toml, setup.cfg, requirements.txt, pytest.ini, Dockerfile, Makefile) com a linguagem apropriada.
+        ## Listas, Citações e Outros Elementos
+        - Mantenha listas ordenadas, não ordenadas, listas de tarefas e listas aninhadas com indentação correta
+        - Preserve blocos de citação, links, notas de rodapé e HTML embutido
 
-        ## REGRAS CRÍTICAS
-        - Não omita: Não omita, resuma ou modifique nenhum conteúdo.
-        - Não reescreva: Não reescreva, interprete ou altere a ordem dos elementos.
-        - Máxima fidelidade: O resultado deve ser um arquivo Markdown pronto para uso, com máxima fidelidade ao documento de origem.
-        - Preservar contexto: Mantenha o contexto técnico e a funcionalidade de todos os exemplos.
+        ## Outputs, Erros e Metadados 
+        - Preserve outputs de terminal, exemplos de erro, tracebacks, logs e metadados
 
-        ## INSTRUÇÃO EXTRA CRÍTICA
-        - Nunca deixe páginas vazias: Se não houver elementos estruturais (cabeçalhos, listas, tabelas, etc.), extraia TODO o texto da página como parágrafos Markdown. Nunca deixe páginas vazias.
-        - Fallback de conteúdo: Se a página contém apenas texto corrido sem estrutura aparente, preserve-o integralmente como parágrafos Markdown.
+        ## Elementos Avançados  
+        - Use `---` para linhas horizontais
+        - Preserve quebras de linha e parágrafos
+        - Aplique escapes onde necessário
 
-        ## EXEMPLOS (para referência)
+        # INSTRUÇÃO EXTRA  
+        Nunca deixe páginas vazias. Se não houver elementos estruturais, extraia todo o texto como parágrafos Markdown.
 
-        ### Diagrama Mermaid (Fluxograma):
+        # EXEMPLOS DE MERMAID (PARA REFERÊNCIA)
+
         ```mermaid
         flowchart TD
             A[Início] --> B{Condição}
@@ -251,8 +204,6 @@ def __get_prompt() -> str:
             C --> E[Fim]
             D --> E
         ```
-
-        ### Diagrama Mermaid (Sequência):
         ```mermaid
         sequenceDiagram
             participant User
@@ -260,8 +211,6 @@ def __get_prompt() -> str:
             User->>Server: Request data
             Server-->>User: Return data
         ```
-
-        ### Diagrama Mermaid (Classe):
         ```mermaid
         classDiagram
             class User {
@@ -270,8 +219,6 @@ def __get_prompt() -> str:
             }
             User <|-- Admin
         ```
-
-        ### Diagrama Mermaid (ER):
         ```mermaid
         erDiagram
             CLIENTE ||--o{ PEDIDO : faz
@@ -284,8 +231,6 @@ def __get_prompt() -> str:
                 date data
             }
         ```
-
-        ### Diagrama Mermaid (Gantt):
         ```mermaid
         gantt
             title Projeto Exemplo
@@ -295,16 +240,8 @@ def __get_prompt() -> str:
             Tarefa2 :after a1, 5d
         ```
 
-        ### Diagrama ASCII (fallback):
-        ```text
-        +-----+     +-----+     +-----+
-        |  A  | --> |  B  | --> |  C  |
-        +-----+     +-----+     +-----+
-        ```
-
-        ---
-
-        Aplique estas especificações rigorosamente para garantir conversão completa e fiel do documento técnico para Markdown, substituindo todas as imagens de diagramas por código Mermaid válido no local original.
+        # OUTPUT ESPERADO  
+        Apenas o conteúdo Markdown convertido, sem qualquer texto adicional, introdução ou conclusão.
         """
 
 
