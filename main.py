@@ -13,10 +13,10 @@ from dotenv import load_dotenv
 
 def main() -> None:
     # Configuração de caminhos e parâmetros
-    # input_pdf = Path("inputs/Manual de publicações da SBC.pdf").resolve()
-    input_pdf = Path(
-        "inputs/PISA 2015 - Assessment Analytical Framework Science Reading Math Financial Collaborative.pdf"
-    ).resolve()
+    input_pdf = Path("inputs/Manual de publicações da SBC.pdf").resolve()
+    # input_pdf = Path(
+    #     "inputs/PISA 2015 - Assessment Analytical Framework Science Reading Math Financial Collaborative.pdf"
+    # ).resolve()
     # input_pdf = Path(input("Digite o caminho do PDF: ")).resolve()
     config = PipelineConfig(
         chunk_size=1, cache_dir=Path("cache"), output_dir=Path("outputs")
@@ -47,13 +47,13 @@ def main() -> None:
     process_with_progress(chunks, process_chunk)
     cache.close()
 
-    # Limpar
-    cache.clear_cache_parallel(chunks)
-
     # Merge final
     output_md = config.output_dir / f"{input_pdf.stem}.md"
     merge_markdown_chunks(chunks, output_md)
     print(f"Conversão concluída. Markdown salvo em: {output_md}")
+
+    # Limpar
+    cache.clear_cache_parallel(chunks)
 
 
 if __name__ == "__main__":
