@@ -12,6 +12,7 @@ from docling.datamodel.pipeline_options_vlm_model import (
 from docling.datamodel.pipeline_options import (
     VlmPipelineOptions,
     RapidOcrOptions,
+    TableStructureOptions,
 )
 from docling.document_converter import DocumentConverter, PdfFormatOption
 from docling.pipeline.vlm_pipeline import VlmPipeline
@@ -24,7 +25,6 @@ def configure_docling_converter() -> DocumentConverter:
     Outras opções para testar:
     (ollama)
     - qwen3-vl:8b
-    - qwen2.5:14b
     """
 
     pipeline_options: VlmPipelineOptions = __options_ollama()
@@ -41,10 +41,15 @@ def configure_docling_converter() -> DocumentConverter:
 def __options_ollama() -> VlmPipelineOptions:
     return VlmPipelineOptions(
         enable_remote_services=True,
+        do_formula_enrichment=True,
+        do_table_structure=True,
+        table_structure_options=TableStructureOptions(
+            do_cell_matching=True,
+        ),
         vlm_options=ApiVlmOptions(
             url="http://localhost:11434/v1/chat/completions",
             params={
-                "model": "qwen2.5:14b",
+                "model": "qwen3-vl:8b",
                 "temperature": 0.3,
                 "top_p": 0.8,
                 "top_k": 40,
@@ -53,7 +58,7 @@ def __options_ollama() -> VlmPipelineOptions:
             },
             prompt=__get_prompt(),
             response_format=ResponseFormat.MARKDOWN,
-            timeout=1_000,
+            timeout=1_200,
             ocr_options=RapidOcrOptions(
                 backend="torch",
                 force_full_page_ocr=True,

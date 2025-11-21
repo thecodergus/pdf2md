@@ -8,6 +8,7 @@ from src.conversion import configure_docling_converter, convert_chunk_to_markdow
 from src.merge import merge_markdown_chunks
 from src.ui import process_with_progress
 import logging, sys
+from dotenv import load_dotenv
 
 
 def main() -> None:
@@ -54,4 +55,5 @@ def main() -> None:
 
 if __name__ == "__main__":
     # logging.disable(sys.maxsize)
+    load_dotenv()
     main()

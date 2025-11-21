@@ -10,5 +10,6 @@ dependencies = [
     "huggingface-hub>=0.36.0",
     "opencv-python>=4.12.0.88",
     "pymupdf>=1.26.6",
+    "python-dotenv>=1.2.1",
     "rich>=14.2.0",
 ]
