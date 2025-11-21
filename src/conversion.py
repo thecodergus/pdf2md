@@ -1,5 +1,7 @@
 # Codemagus: Conversão PDF→Markdown com docling VLM Qwen3-VL-8B-Instruct (local)
 from pathlib import Path
+import os
+from typing import Final
 from .types import ChunkInfo, ChunkList
 from docling.datamodel.base_models import InputFormat
 from docling.datamodel.pipeline_options_vlm_model import (
@@ -27,7 +29,7 @@ def configure_docling_converter() -> DocumentConverter:
     - qwen3-vl:8b
     """
 
-    pipeline_options: VlmPipelineOptions = __options_ollama()
+    pipeline_options: VlmPipelineOptions = __options_openrouter()
 
     return DocumentConverter(
         format_options={
@@ -73,6 +75,69 @@ def __options_ollama() -> VlmPipelineOptions:
             ),
         ),
     )
+
+
+def __options_openrouter() -> VlmPipelineOptions:
+    """
+    Configuração funcional e segura do pipeline Docling para uso com OpenRouter.
+    - Endpoint remoto autenticado
+    - Parâmetros de modelo ajustados
+    - OCR multilíngue robusto
+    - Estrutura de tabelas avançada
+
+    Modelos que são bons e que testei:
+    - qwen/qwen3-vl-235b-a22b-instruct
+    - qwen/qwen2.5-vl-72b-instruct
+    """
+    api_key: Final[str] = __get_openrouter_api_key()
+    return VlmPipelineOptions(
+        enable_remote_services=True,
+        do_formula_enrichment=True,
+        do_table_structure=True,
+        do_code_enrichment=True,
+        table_structure_options=TableStructureOptions(
+            do_cell_matching=True,
+            model_name="TableFormer++",
+        ),
+        vlm_options=ApiVlmOptions(
+            url="https://openrouter.ai/api/v1/chat/completions",
+            params={
+                "model": "qwen/qwen2.5-vl-72b-instruct",  # Substitua por outro modelo OpenRouter se necessário
+                "temperature": 0.3,
+                "top_p": 0.8,
+                "top_k": 40,
+                "repeat_penalty": 1.1,
+                "max_tokens": 16384,
+            },
+            prompt=__get_prompt(),
+            response_format=ResponseFormat.MARKDOWN,
+            timeout=1200,  # Timeout ampliado para API remota
+            ocr_options=RapidOcrOptions(
+                backend="paddle",
+                force_full_page_ocr=True,
+                lang=["portuguese", "english"],
+                print_verbose=True,
+            ),
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+        ),
+    )
+
+
+def __get_openrouter_api_key() -> str:
+    """
+    Recupera a chave de API do OpenRouter de variável de ambiente.
+    Função pura, defensiva, nunca expõe segredo em logs.
+    """
+    api_key: str | None = os.getenv("OPENROUTER_API_KEY")
+    if not api_key:
+        raise RuntimeError(
+            "Variável de ambiente OPENROUTER_API_KEY não definida. "
+            "Defina sua chave de API do OpenRouter para autenticação segura."
+        )
+    return api_key
 
 
 def __get_prompt() -> str:

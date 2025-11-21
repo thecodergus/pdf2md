@@ -14,6 +14,9 @@ from dotenv import load_dotenv
 def main() -> None:
     # Configuração de caminhos e parâmetros
     input_pdf = Path("inputs/Manual de publicações da SBC.pdf").resolve()
+    # input_pdf = Path(
+    #     "inputs/PISA 2015 - Assessment Analytical Framework Science Reading Math Financial Collaborative.pdf"
+    # ).resolve()
     # input_pdf = Path(input("Digite o caminho do PDF: ")).resolve()
     config = PipelineConfig(
         chunk_size=1, cache_dir=Path("cache"), output_dir=Path("outputs")
@@ -54,6 +57,6 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    # logging.disable(sys.maxsize)
+    logging.disable(sys.maxsize)
     load_dotenv()
     main()
