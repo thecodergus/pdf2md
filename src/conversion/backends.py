@@ -6,29 +6,19 @@ from docling.datamodel.pipeline_options_vlm_model import (
 )
 from docling.datamodel.pipeline_options import (
     VlmPipelineOptions,
-    RapidOcrOptions,
-    TableStructureOptions,
     PictureDescriptionVlmOptions,
 )
 from .prompts import __get_mermaid_prompt, __get_prompt_1, __get_prompt_2
+from pydantic import AnyUrl
 
 
 def __options_ollama(model: str) -> VlmPipelineOptions:
     return VlmPipelineOptions(
-        enable_remote_services=True,
-        do_formula_enrichment=True,
-        do_table_structure=True,
-        do_code_enrichment=True,
-        # do_picture_description=True,
-        table_structure_options=TableStructureOptions(
-            do_cell_matching=True,
-            model_name="TableFormer++",
-        ),
         do_picture_classification=True,
         do_picture_description=True,
         picture_description_options=__picture_description_options(model),
         vlm_options=ApiVlmOptions(
-            url="http://localhost:11434/v1/chat/completions",
+            url=AnyUrl("http://localhost:11434/v1/chat/completions"),
             params={
                 "model": model,
                 "temperature": 0.3,
@@ -40,15 +30,6 @@ def __options_ollama(model: str) -> VlmPipelineOptions:
             prompt=__get_prompt_1(),
             response_format=ResponseFormat.MARKDOWN,
             timeout=1_200,
-            ocr_options=RapidOcrOptions(
-                backend="paddle",
-                force_full_page_ocr=True,
-                lang=[
-                    "portuguese",
-                    "english",
-                ],
-                print_verbose=True,
-            ),
         ),
     )
 
@@ -65,21 +46,14 @@ def __options_openrouter(model: str) -> VlmPipelineOptions:
     - qwen/qwen3-vl-235b-a22b-instruct
     - qwen/qwen2.5-vl-72b-instruct
     """
-    api_key: Final[str] = __get_openrouter_api_key()
+    api_key: AnyUrl = __get_openrouter_api_key()
     return VlmPipelineOptions(
         enable_remote_services=True,
-        do_formula_enrichment=True,
-        do_table_structure=True,
-        do_code_enrichment=True,
-        table_structure_options=TableStructureOptions(
-            do_cell_matching=True,
-            model_name="TableFormer++",
-        ),
         do_picture_classification=True,
         do_picture_description=True,
         picture_description_options=__picture_description_options(model),
         vlm_options=ApiVlmOptions(
-            url="https://openrouter.ai/api/v1/chat/completions",
+            url=AnyUrl("https://openrouter.ai/api/v1/chat/completions"),
             params={
                 "model": model,  # Substitua por outro modelo OpenRouter se necessário
                 "temperature": 0.3,
@@ -91,12 +65,6 @@ def __options_openrouter(model: str) -> VlmPipelineOptions:
             prompt=__get_prompt_1(),
             response_format=ResponseFormat.MARKDOWN,
             timeout=1200,  # Timeout ampliado para API remota
-            ocr_options=RapidOcrOptions(
-                backend="paddle",
-                force_full_page_ocr=True,
-                lang=["portuguese", "english"],
-                print_verbose=True,
-            ),
             headers={
                 "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json",
@@ -105,7 +73,7 @@ def __options_openrouter(model: str) -> VlmPipelineOptions:
     )
 
 
-def __get_openrouter_api_key() -> str:
+def __get_openrouter_api_key() -> AnyUrl:
     """
     Recupera a chave de API do OpenRouter de variável de ambiente.
     Função pura, defensiva, nunca expõe segredo em logs.
@@ -116,7 +84,7 @@ def __get_openrouter_api_key() -> str:
             "Variável de ambiente OPENROUTER_API_KEY não definida. "
             "Defina sua chave de API do OpenRouter para autenticação segura."
         )
-    return api_key
+    return AnyUrl(api_key)
 
 
 def __options_lmstudio(model: str) -> VlmPipelineOptions:
@@ -129,18 +97,11 @@ def __options_lmstudio(model: str) -> VlmPipelineOptions:
     """
     return VlmPipelineOptions(
         enable_remote_services=True,
-        do_formula_enrichment=True,
-        do_table_structure=True,
-        do_code_enrichment=True,
-        table_structure_options=TableStructureOptions(
-            do_cell_matching=True,
-            model_name="TableFormer++",
-        ),
         do_picture_classification=True,
         do_picture_description=True,
         picture_description_options=__picture_description_options(model),
         vlm_options=ApiVlmOptions(
-            url="http://192.168.15.3:1234/v1/chat/completions",
+            url=AnyUrl("http://192.168.15.3:1234/v1/chat/completions"),
             params={
                 "model": model,
                 "temperature": 0.3,
@@ -152,16 +113,6 @@ def __options_lmstudio(model: str) -> VlmPipelineOptions:
             prompt=__get_prompt_1(),
             response_format=ResponseFormat.MARKDOWN,
             timeout=1_200,  # Timeout otimizado para local
-            ocr_options=RapidOcrOptions(
-                backend="paddle",
-                force_full_page_ocr=True,
-                lang=["portuguese", "english"],
-                print_verbose=True,
-            ),
-            headers={
-                "Content-Type": "application/json",
-                # "Authorization": "Bearer lm-studio",  # Opcional, só se quiser forçar compatibilidade
-            },
         ),
     )
 
@@ -195,18 +146,11 @@ def __options_localai(model: str) -> VlmPipelineOptions:
     # Retorna configuração imutável do pipeline
     return VlmPipelineOptions(
         enable_remote_services=True,
-        do_formula_enrichment=True,
-        do_table_structure=True,
-        do_code_enrichment=True,
-        table_structure_options=TableStructureOptions(
-            do_cell_matching=True,
-            model_name="TableFormer++",
-        ),
         do_picture_classification=True,
         do_picture_description=True,
         picture_description_options=__picture_description_options(model),
         vlm_options=ApiVlmOptions(
-            url="http://localhost:8080/v1/chat/completions",
+            url=AnyUrl("http://localhost:8080/v1/chat/completions"),
             params={
                 "model": model,
                 "temperature": 0.3,
@@ -218,12 +162,6 @@ def __options_localai(model: str) -> VlmPipelineOptions:
             prompt=__get_prompt_1(),  # Função já existente no seu código-base
             response_format=ResponseFormat.MARKDOWN,
             timeout=1200,  # Timeout generoso para inferência local
-            ocr_options=RapidOcrOptions(
-                backend="paddle",
-                force_full_page_ocr=True,
-                lang=["portuguese", "english"],
-                print_verbose=True,
-            ),
             headers=headers,
         ),
     )

@@ -1,7 +1,4 @@
 from docling.datamodel.base_models import InputFormat
-from docling.datamodel.pipeline_options_vlm_model import (
-
-)
 from docling.datamodel.pipeline_options import (
     VlmPipelineOptions,
 )
@@ -58,7 +55,7 @@ def configure_docling_converter() -> DocumentConverter:
     # pipeline_options: VlmPipelineOptions = __options_ollama("llava-phi3:3.8b")
 
     pipeline_options: VlmPipelineOptions = __options_lmstudio(
-             "DevQuasar/falcon2-11B-GGUF"
+        "DevQuasar/falcon2-11B-GGUF"
         #     "lmstudio-community/pixtral-12b-GGUF"
     )
 
