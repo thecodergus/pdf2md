@@ -17,9 +17,9 @@ def __get_prompt_1() -> str:
 
 ## ETAPA 3: VALIDAÇÃO DE HIERARQUIA (TÍTULOS E SUBTÍTULOS)
 - Só converta um bloco para cabeçalho Markdown (ex: #, ##, ###) se TODOS os 3 critérios abaixo forem atendidos:
-  1. **Tamanho de fonte visivelmente maior** que o texto corrido.
-  2. **Destaque visual claro** (negrito, sublinhado, centralizado, ou espaçamento extra acima/abaixo).
-  3. **Isolamento**: o bloco está separado do texto anterior e posterior (não é continuação de parágrafo).
+  1. Tamanho de fonte visivelmente maior que o texto corrido.
+  2. Destaque visual claro (negrito, sublinhado, centralizado, ou espaçamento extra acima/abaixo).
+  3. Isolamento: o bloco está separado do texto anterior e posterior (não é continuação de parágrafo).
 - Se o início da página for apenas texto corrido, NÃO promova a título. Mantenha como parágrafo.
 - Exemplos negativos:
   + Página inicia com "O sistema proposto apresenta..." → NÃO é título, converta como parágrafo.
@@ -28,26 +28,26 @@ def __get_prompt_1() -> str:
 
 ## ETAPA 4: CONVERSÃO ESTRUTURADA PARA MARKDOWN
 - Siga as regras abaixo para cada elemento:
-  + **Títulos/Subtítulos**: Use cabeçalhos Markdown (#, ##, ###) conforme hierarquia validada.
-  + **Parágrafos**: Mantenha como texto simples, preservando ordem e espaçamento.
-  + **Blocos de código**: Use fenced code blocks com linguagem correta (ex: ```python).
-  + **Tabelas simples**: Use pipe tables Markdown. Tabelas complexas: use HTML (<table>).
-  + **Fórmulas matemáticas**: Converta para LaTeX ($...$ inline, $$...$$ display).
-  + **Listas**: Mantenha ordenação e indentação.
-  + **Citações, links, notas de rodapé**: Preserve formatação.
-  + **Outputs, erros, logs**: Preserve integralmente.
-  + **Linhas horizontais**: Use `---`.
-  + **Quebras de linha e parágrafos**: Preserve.
-  + **Aplique escapes** onde necessário.
+  + Títulos/Subtítulos: Use cabeçalhos Markdown (#, ##, ###) conforme hierarquia validada.
+  + Parágrafos: Mantenha como texto simples, preservando ordem e espaçamento.
+  + Blocos de código: Use fenced code blocks com linguagem correta (ex: ```python).
+  + Tabelas simples: Use pipe tables Markdown. Tabelas complexas: use HTML (<table>).
+  + Fórmulas matemáticas: Converta para LaTeX ($...$ inline, $$...$$ display).
+  + Listas: Mantenha ordenação e indentação.
+  + Citações, links, notas de rodapé: Preserve formatação.
+  + Outputs, erros, logs: Preserve integralmente.
+  + Linhas horizontais: Use `---`.
+  + Quebras de linha e parágrafos: Preserve.
+  + Aplique escapes onde necessário.
 - Ignore completamente imagens, gráficos, diagramas, legendas e referências visuais.
 
 ## ETAPA 5: DETECÇÃO E REMOÇÃO DE REPETIÇÕES INTERNAS
 - Após converter a página para Markdown, revise o texto resultante.
-- **Detecte e remova qualquer trecho, frase ou parágrafo repetido consecutivamente mais de uma vez na mesma página.**
+- Detecte e remova qualquer trecho, frase ou parágrafo repetido consecutivamente mais de uma vez na mesma página.
   + Considere como repetição qualquer sequência de 12 palavras ou mais que ocorra 2 vezes ou mais, mesmo com pequenas variações.
   + Utilize análise de n-gramas (8-12 palavras) e rolling hash para identificar repetições.
   + Ignore repetições legítimas em tabelas, listas ou estruturas de código.
-- **Remova todas as repetições, mantendo apenas a primeira ocorrência de cada trecho.**
+- Remova todas as repetições, mantendo apenas a primeira ocorrência de cada trecho.
 - Se identificar um padrão de repetição que se estende indefinidamente (loop), interrompa a repetição, limpe o texto e continue normalmente.
 - Exemplos de repetição a remover:
   + "sem aplicação de questionários, grupos focal ou outras formas de coleta dirigida de dados, sem aplicação de questionários, grupos focal ou outras formas de coleta dirigida de dados, ..." → Mantenha apenas a primeira ocorrência.
@@ -155,20 +155,23 @@ def __get_mermaid_prompt() -> str:
     Baseado em guias técnicos de Mermaid e melhores práticas de prompt engineering para VLMs.
     """
     return """
-# Prompt Definitivo para LLM Multimodal: Conversão de Imagens em Diagramas Mermaid e Tabelas Markdown
+# Conversão de Imagens em Diagramas Mermaid e Tabelas Markdown
 
-**IMPORTANTE:** Analise cuidadosamente a imagem fornecida e siga as instruções abaixo, respondendo exclusivamente em português.
+IMPORTANTE: Analise cuidadosamente a imagem fornecida e siga as instruções abaixo, respondendo exclusivamente em português.
+
+##  Instruções Criticas
+- Analise visualmente e converta este documento para Mermaid ou Markdown com FIDELIDADE ABSOLUTA.
 
 ---
 
-## 1. Se a imagem for uma **TABELA** (linhas e colunas de dados organizados):
+## 1. Se a imagem for uma TABELA (linhas e colunas de dados organizados):
 
 - Transcreva fielmente como tabela Markdown, preservando cabeçalhos, alinhamento e todos os valores.
 - Use pipes (`|`) para separar colunas e hifens (`-`) para a linha de cabeçalho.
 - Se uma célula contiver o caractere pipe (`|`), escape usando `&#124;`.
 - Para tabelas complexas (células mescladas, múltiplos cabeçalhos), utilize HTML (`<table>`, `<tr>`, `<td>`, `<th>`).
 
-**Exemplo de tabela Markdown:**
+Exemplo de tabela Markdown:
 ```
 | Produto     | Preço (R$) | Estoque |
 |-------------|------------|---------|
@@ -177,7 +180,7 @@ def __get_mermaid_prompt() -> str:
 | Tablet Z    | 1200.00    | 22      |
 ```
 
-**Exemplo de tabela complexa em HTML:**
+Exemplo de tabela complexa em HTML:
 ```
 <table>
   <tr>
@@ -194,9 +197,9 @@ def __get_mermaid_prompt() -> str:
 
 ---
 
-## 2. Se a imagem for um **diagrama ou gráfico técnico**, identifique o tipo e transcreva em Mermaid. Use a descrição e o exemplo correspondente:
+## 2. Se a imagem for um diagrama ou gráfico técnico, identifique o tipo e transcreva em Mermaid. Use a descrição e o exemplo correspondente:
 
-- **Fluxograma (`flowchart`)**  
+### Fluxograma (`flowchart`)  
   *Modela processos, decisões e fluxos de trabalho com caixas, setas e rótulos.*
   ```
   ```mermaid
@@ -209,7 +212,7 @@ def __get_mermaid_prompt() -> str:
   ```
   ```
 
-- **Diagrama de Sequência (`sequenceDiagram`)**  
+### Diagrama de Sequência (`sequenceDiagram`)  
   *Mostra interações temporais entre entidades, útil para APIs, protocolos e fluxos de eventos.*
   ```
   ```mermaid
@@ -221,7 +224,7 @@ def __get_mermaid_prompt() -> str:
   ```
   ```
 
-- **Diagrama de Classe (`classDiagram`)**  
+### Diagrama de Classe (`classDiagram`)  
   *Descreve estruturas de sistemas orientados a objetos, incluindo classes, atributos e métodos.*
   ```
   ```mermaid
@@ -234,7 +237,7 @@ def __get_mermaid_prompt() -> str:
   ```
   ```
 
-- **Diagrama de Estados (`stateDiagram-v2`)**  
+### Diagrama de Estados (`stateDiagram-v2`)  
   *Mostra estados e transições de sistemas, como máquinas de estados e ciclos de vida.*
   ```
   ```mermaid
@@ -245,7 +248,7 @@ def __get_mermaid_prompt() -> str:
   ```
   ```
 
-- **Diagrama ER (`erDiagram`)**  
+### Diagrama ER (`erDiagram`)  
   *Modela entidades e relacionamentos de banco de dados, incluindo atributos e cardinalidade.*
   ```
   ```mermaid
@@ -262,7 +265,7 @@ def __get_mermaid_prompt() -> str:
   ```
   ```
 
-- **Gráfico de Gantt (`gantt`)**  
+### Gráfico de Gantt (`gantt`)  
   *Visualiza cronogramas de projetos, tarefas, prazos e dependências.*
   ```
   ```mermaid
@@ -275,7 +278,7 @@ def __get_mermaid_prompt() -> str:
   ```
   ```
 
-- **Gráfico de Pizza (`pie`)**  
+### Gráfico de Pizza (`pie`)  
   *Mostra proporções de um todo, ideal para distribuição percentual de categorias.*
   ```
   ```mermaid
@@ -288,7 +291,7 @@ def __get_mermaid_prompt() -> str:
   ```
   ```
 
-- **Gráfico de Barras/Linha (XY Chart) (`xychart-beta`)**  
+### Gráfico de Barras/Linha (XY Chart) (`xychart-beta`)  
   *Exibe dados quantitativos em eixos cartesianos, útil para séries temporais e comparações.*
   ```
   ```mermaid
@@ -303,7 +306,7 @@ def __get_mermaid_prompt() -> str:
   ```
   ```
 
-- **Sankey (`sankey-beta`)**  
+### Sankey (`sankey-beta`)  
   *Visualiza fluxos quantitativos entre nós, ideal para análise de processos e distribuição de recursos.*
   ```
   ```mermaid
@@ -315,7 +318,7 @@ def __get_mermaid_prompt() -> str:
   ```
   ```
 
-- **Timeline (`timeline`)**  
+### Timeline (`timeline`)  
   *Exibe eventos em ordem cronológica, útil para históricos e releases.*
   ```
   ```mermaid
@@ -330,7 +333,7 @@ def __get_mermaid_prompt() -> str:
   ```
   ```
 
-- **Quadrant Chart (`quadrantChart`)**  
+### Quadrant Chart (`quadrantChart`)  
   *Classifica entidades em duas dimensões, útil para análise SWOT e priorização de tarefas.*
   ```
   ```mermaid
@@ -349,7 +352,7 @@ def __get_mermaid_prompt() -> str:
   ```
   ```
 
-- **Mindmap (`mindmap`)**  
+### Mindmap (`mindmap`)  
   *Organiza ideias hierarquicamente, ideal para brainstorming e planejamento.*
   ```
   ```mermaid
@@ -360,7 +363,7 @@ def __get_mermaid_prompt() -> str:
   ```
   ```
 
-- **Git Graph (`gitGraph`)**  
+### Git Graph (`gitGraph`)  
   *Visualiza fluxos de branches e commits Git, útil para versionamento e onboarding.*
   ```
   ```mermaid
@@ -373,7 +376,7 @@ def __get_mermaid_prompt() -> str:
   ```
   ```
 
-- **User Journey (`journey`)**  
+### User Journey (`journey`)  
   *Mapeia etapas e experiências do usuário, útil em UX e mapeamento de jornadas.*
   ```
   ```mermaid
@@ -385,7 +388,7 @@ def __get_mermaid_prompt() -> str:
   ```
   ```
 
-- **C4 Diagram (`C4Context`)**  
+### C4 Diagram (`C4Context`)  
   *Descreve arquitetura de software em diferentes níveis de contexto.*
   ```
   ```mermaid
@@ -398,7 +401,7 @@ def __get_mermaid_prompt() -> str:
 
 ---
 
-## 3. **Filtragem rigorosa**:
+## 3. Filtragem rigorosa:
 
 - Ignore completamente imagens que sejam logotipos, marcas d'água, fotografias, ilustrações artísticas, elementos decorativos ou figuras sem valor informativo ou estrutural.
 - Ignore gráficos sem estrutura clara de nós, conexões ou dados quantitativos.
@@ -408,14 +411,14 @@ def __get_mermaid_prompt() -> str:
 
 ---
 
-## 4. **Formato de saída obrigatório**:
+## 4. Formato de saída obrigatório:
 
 - Responda exclusivamente com o bloco de código Mermaid (delimitado por ```mermaid) ou a tabela Markdown/HTML.
 - NÃO inclua explicações, comentários, legendas ou texto adicional.
 
 ---
 
-## 5. **Casos especiais**:
+## 5. Casos especiais:
 
 - Para diagramas híbridos, priorize o tipo estrutural predominante.
 - Em imagens de baixa qualidade, foque nos elementos estruturais visíveis.
@@ -423,7 +426,7 @@ def __get_mermaid_prompt() -> str:
 
 ---
 
-## 6. **Checklist de Validação (interno ao modelo):**
+## 6. Checklist de Validação (interno ao modelo):
 
 - [ ] O output está em português, sem texto extra?
 - [ ] O tipo de diagrama/tabela foi corretamente identificado?
