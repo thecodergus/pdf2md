@@ -83,7 +83,7 @@ def __options_openrouter(model: str) -> VlmPipelineOptions:
     )
 
 
-def __get_openrouter_api_key() -> AnyUrl:
+def __get_openrouter_api_key() -> str:
     """
     Recupera a chave de API do OpenRouter de variável de ambiente.
     Função pura, defensiva, nunca expõe segredo em logs.
@@ -94,7 +94,7 @@ def __get_openrouter_api_key() -> AnyUrl:
             "Variável de ambiente OPENROUTER_API_KEY não definida. "
             "Defina sua chave de API do OpenRouter para autenticação segura."
         )
-    return AnyUrl(api_key)
+    return api_key
 
 
 def __options_lmstudio(model: str) -> VlmPipelineOptions:

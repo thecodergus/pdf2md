@@ -43,24 +43,23 @@ def configure_docling_converter() -> DocumentConverter:
     -
     """
 
-    # pipeline_options: VlmPipelineOptions = __options_openrouter(
-    #     "qwen/qwen2.5-vl-72b-instruct"
-    #      "qwen/qwen3-vl-30b-a3b-instruct"
-    #      "nvidia/nemotron-nano-12b-v2-vl"
-    #      "opengvlab/internvl3-78b"
-    #      "deepcogito/cogito-v2-preview-llama-109b-moe"
-    #      "baidu/ernie-4.5-vl-28b-a3b"
-    #      "openai/gpt-5-nano"
-    # )
+    pipeline_options: VlmPipelineOptions = __options_openrouter(
+        "qwen/qwen2.5-vl-72b-instruct"
+        #      "qwen/qwen3-vl-30b-a3b-instruct"
+        #      "nvidia/nemotron-nano-12b-v2-vl"
+        #      "opengvlab/internvl3-78b"
+        #      "deepcogito/cogito-v2-preview-llama-109b-moe"
+        #      "baidu/ernie-4.5-vl-28b-a3b"
+        #      "openai/gpt-5-nano"
+    )
     # pipeline_options: VlmPipelineOptions = __options_ollama()
 
-    pipeline_options: VlmPipelineOptions = __options_lmstudio(
-        "DevQuasar/falcon2-11B-GGUF"
-        #     "lmstudio-community/pixtral-12b-GGUF"
-    )
+    # pipeline_options: VlmPipelineOptions = __options_lmstudio(
+    #     "lmstudio-community/pixtral-12b-GGUF"
+    # )
 
     # pipeline_options: VlmPipelineOptions = __options_localai(
-    #   "pocketdoc_dans-personalityengine-v1.2.0-24b"
+    #     "pocketdoc_dans-personalityengine-v1.2.0-24b"
     # )
 
     # A tentar conseguir Hospedar:
