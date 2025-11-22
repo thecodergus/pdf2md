@@ -17,6 +17,7 @@ def __options_ollama(model: str) -> VlmPipelineOptions:
 
     URL: AnyUrl = AnyUrl("http://localhost:11434/v1/chat/completions")
     return VlmPipelineOptions(
+        enable_remote_services=True,
         do_picture_description=True,
         picture_description_options=__picture_description_options(model, URL),
         vlm_options=ApiVlmOptions(
