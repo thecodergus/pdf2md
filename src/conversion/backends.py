@@ -10,6 +10,7 @@ from docling.datamodel.pipeline_options import (
 )
 from .prompts import __get_mermaid_prompt, __get_prompt_1, __get_prompt_2
 from pydantic import AnyUrl
+from docling.datamodel.accelerator_options import AcceleratorDevice, AcceleratorOptions
 
 
 def __options_ollama(model: str) -> VlmPipelineOptions:
@@ -30,6 +31,9 @@ def __options_ollama(model: str) -> VlmPipelineOptions:
             prompt=__get_prompt_1(),
             response_format=ResponseFormat.MARKDOWN,
             timeout=1_200,
+        ),
+        accelerator_options=AcceleratorOptions(
+            num_threads=8, device=AcceleratorDevice.CUDA
         ),
     )
 
@@ -69,6 +73,9 @@ def __options_openrouter(model: str) -> VlmPipelineOptions:
                 "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json",
             },
+        ),
+        accelerator_options=AcceleratorOptions(
+            num_threads=8, device=AcceleratorDevice.CUDA
         ),
     )
 
@@ -113,6 +120,9 @@ def __options_lmstudio(model: str) -> VlmPipelineOptions:
             prompt=__get_prompt_1(),
             response_format=ResponseFormat.MARKDOWN,
             timeout=1_200,  # Timeout otimizado para local
+        ),
+        accelerator_options=AcceleratorOptions(
+            num_threads=8, device=AcceleratorDevice.CUDA
         ),
     )
 
@@ -163,6 +173,9 @@ def __options_localai(model: str) -> VlmPipelineOptions:
             response_format=ResponseFormat.MARKDOWN,
             timeout=1200,  # Timeout generoso para inferência local
             headers=headers,
+        ),
+        accelerator_options=AcceleratorOptions(
+            num_threads=8, device=AcceleratorDevice.CUDA
         ),
     )
 

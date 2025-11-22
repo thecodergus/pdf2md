@@ -27,7 +27,7 @@ def configure_docling_converter() -> DocumentConverter:
     -
 
     (LM Studio)
-    - )
+    -
 
     (LocalAI)
     -
@@ -52,7 +52,7 @@ def configure_docling_converter() -> DocumentConverter:
     #      "baidu/ernie-4.5-vl-28b-a3b"
     #      "openai/gpt-5-nano"
     # )
-    # pipeline_options: VlmPipelineOptions = __options_ollama("llava-phi3:3.8b")
+    # pipeline_options: VlmPipelineOptions = __options_ollama()
 
     pipeline_options: VlmPipelineOptions = __options_lmstudio(
         "DevQuasar/falcon2-11B-GGUF"
