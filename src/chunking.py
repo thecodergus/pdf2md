@@ -1,6 +1,7 @@
 from pathlib import Path
 import fitz
 from .types import ChunkInfo, ChunkList
+from docling.document_converter import DocumentConverter
 
 
 def split_pdf_chunks(pdf_path: Path, chunk_size: int, cache_dir: Path) -> ChunkList:
@@ -24,3 +25,12 @@ def split_pdf_chunks(pdf_path: Path, chunk_size: int, cache_dir: Path) -> ChunkL
                 ChunkInfo(pdf_path=chunk_pdf, md_path=chunk_md, index_=chunk_idx)
             )
         return tuple(chunk_infos)
+
+
+def convert_chunk_to_markdown(chunk: ChunkInfo, converter: DocumentConverter) -> None:
+    """
+    Converte um chunk PDF em Markdown usando docling e salva na pasta cache.
+    """
+    result = converter.convert(str(chunk.pdf_path))
+    markdown = result.document.export_to_markdown()
+    chunk.md_path.write_text(markdown, encoding="utf-8")
