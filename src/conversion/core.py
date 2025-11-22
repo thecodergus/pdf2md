@@ -47,9 +47,9 @@ def configure_docling_converter() -> DocumentConverter:
     -
     """
 
-    # pipeline_options: VlmPipelineOptions = __options_openrouter(
-    #
-    # )
+    pipeline_options: VlmPipelineOptions = __options_openrouter(
+        "qwen/qwen2.5-vl-72b-instruct"
+    )
 
     # pipeline_options: VlmPipelineOptions = __options_ollama()
 

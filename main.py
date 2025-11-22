@@ -11,14 +11,9 @@ import logging, sys
 from dotenv import load_dotenv
 
 
-def main() -> None:
+def main(caminho: str) -> None:
     # Configuração de caminhos e parâmetros
-    input_pdf = Path(
-        "inputs/Organização e Projeto de Computadores Interface Hardware-Software_rearranged.pdf"
-    ).resolve()
-    # input_pdf = Path(
-    #     "inputs/PISA 2015 - Assessment Analytical Framework Science Reading Math Financial Collaborative.pdf"
-    # ).resolve()
+    input_pdf = Path(caminho).resolve()
     # input_pdf = Path(input("Digite o caminho do PDF: ")).resolve()
     config = PipelineConfig(
         chunk_size=1, cache_dir=Path("cache"), output_dir=Path("outputs")
@@ -61,4 +56,10 @@ def main() -> None:
 if __name__ == "__main__":
     logging.disable(sys.maxsize)
     load_dotenv()
-    main()
+
+    caminhos: list[str] = [
+        "inputs/PISA 2015 - Assessment Analytical Framework Science Reading Math Financial Collaborative.pdf"
+    ]
+
+    for c in caminhos:
+        main(c)
