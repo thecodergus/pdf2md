@@ -17,7 +17,6 @@ def __options_ollama(model: str) -> VlmPipelineOptions:
 
     URL: str = "http://localhost:11434/v1/chat/completions"
     return VlmPipelineOptions(
-        do_picture_classification=True,
         do_picture_description=True,
         picture_description_options=__picture_description_options(model, URL),
         vlm_options=ApiVlmOptions(
@@ -58,7 +57,6 @@ def __options_openrouter(model: str) -> VlmPipelineOptions:
 
     return VlmPipelineOptions(
         enable_remote_services=True,
-        do_picture_classification=True,
         do_picture_description=True,
         picture_description_options=__picture_description_options(model, URL),
         vlm_options=ApiVlmOptions(
@@ -75,7 +73,6 @@ def __options_openrouter(model: str) -> VlmPipelineOptions:
             response_format=ResponseFormat.MARKDOWN,
             timeout=1200,  # Timeout ampliado para API remota
             headers={
-                "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json",
             },
         ),
@@ -112,7 +109,6 @@ def __options_lmstudio(model: str) -> VlmPipelineOptions:
 
     return VlmPipelineOptions(
         enable_remote_services=True,
-        do_picture_classification=True,
         do_picture_description=True,
         picture_description_options=__picture_description_options(model, URL),
         vlm_options=ApiVlmOptions(
@@ -155,18 +151,11 @@ def __options_localai(model: str) -> VlmPipelineOptions:
         - Imutabilidade garantida em todas as estruturas retornadas.
         - Parâmetros de geração e OCR idênticos aos de outros backends para portabilidade.
     """
-    # Recupera API Key do LocalAI, se definida (autenticação opcional)
-    api_key: str | None = os.getenv("LOCALAI_API_KEY")
-    headers: dict[str, str] = {"Content-Type": "application/json"}
-    if api_key:
-        headers["Authorization"] = f"Bearer {api_key}"
-
     URL: str = "http://localhost:8080/v1/chat/completions"
 
     # Retorna configuração imutável do pipeline
     return VlmPipelineOptions(
         enable_remote_services=True,
-        do_picture_classification=True,
         do_picture_description=True,
         picture_description_options=__picture_description_options(model, URL),
         vlm_options=ApiVlmOptions(
@@ -181,8 +170,8 @@ def __options_localai(model: str) -> VlmPipelineOptions:
             },
             prompt=__get_prompt_1(),  # Função já existente no seu código-base
             response_format=ResponseFormat.MARKDOWN,
-            timeout=1200,  # Timeout generoso para inferência local
-            headers=headers,
+            timeout=1_200,  # Timeout generoso para inferência local
+            headers={"Content-Type": "application/json"},
         ),
         accelerator_options=AcceleratorOptions(
             num_threads=8, device=AcceleratorDevice.CUDA
