@@ -6,7 +6,7 @@ from docling.datamodel.pipeline_options_vlm_model import (
 )
 from docling.datamodel.pipeline_options import (
     VlmPipelineOptions,
-    PictureDescriptionVlmOptions,
+    PictureDescriptionApiOptions,
 )
 from .prompts import __get_mermaid_prompt, __get_prompt_1, __get_prompt_2
 from pydantic import AnyUrl
@@ -14,12 +14,14 @@ from docling.datamodel.accelerator_options import AcceleratorDevice, Accelerator
 
 
 def __options_ollama(model: str) -> VlmPipelineOptions:
+
+    URL: str = "http://localhost:11434/v1/chat/completions"
     return VlmPipelineOptions(
         do_picture_classification=True,
         do_picture_description=True,
-        picture_description_options=__picture_description_options(model),
+        picture_description_options=__picture_description_options(model, URL),
         vlm_options=ApiVlmOptions(
-            url=AnyUrl("http://localhost:11434/v1/chat/completions"),
+            url=AnyUrl(URL),
             params={
                 "model": model,
                 "temperature": 0.3,
@@ -51,13 +53,16 @@ def __options_openrouter(model: str) -> VlmPipelineOptions:
     - qwen/qwen2.5-vl-72b-instruct
     """
     api_key: AnyUrl = __get_openrouter_api_key()
+
+    URL: str = "https://openrouter.ai/api/v1/chat/completions"
+
     return VlmPipelineOptions(
         enable_remote_services=True,
         do_picture_classification=True,
         do_picture_description=True,
-        picture_description_options=__picture_description_options(model),
+        picture_description_options=__picture_description_options(model, URL),
         vlm_options=ApiVlmOptions(
-            url=AnyUrl("https://openrouter.ai/api/v1/chat/completions"),
+            url=AnyUrl(URL),
             params={
                 "model": model,  # Substitua por outro modelo OpenRouter se necessário
                 "temperature": 0.3,
@@ -102,13 +107,16 @@ def __options_lmstudio(model: str) -> VlmPipelineOptions:
     - OCR multilíngue robusto
     - Estrutura de tabelas avançada
     """
+
+    URL: str = "http://192.168.15.3:1234/v1/chat/completions"
+
     return VlmPipelineOptions(
         enable_remote_services=True,
         do_picture_classification=True,
         do_picture_description=True,
-        picture_description_options=__picture_description_options(model),
+        picture_description_options=__picture_description_options(model, URL),
         vlm_options=ApiVlmOptions(
-            url=AnyUrl("http://192.168.15.3:1234/v1/chat/completions"),
+            url=AnyUrl(URL),
             params={
                 "model": model,
                 "temperature": 0.3,
@@ -153,14 +161,16 @@ def __options_localai(model: str) -> VlmPipelineOptions:
     if api_key:
         headers["Authorization"] = f"Bearer {api_key}"
 
+    URL: str = "http://localhost:8080/v1/chat/completions"
+
     # Retorna configuração imutável do pipeline
     return VlmPipelineOptions(
         enable_remote_services=True,
         do_picture_classification=True,
         do_picture_description=True,
-        picture_description_options=__picture_description_options(model),
+        picture_description_options=__picture_description_options(model, URL),
         vlm_options=ApiVlmOptions(
-            url=AnyUrl("http://localhost:8080/v1/chat/completions"),
+            url=AnyUrl(URL),
             params={
                 "model": model,
                 "temperature": 0.3,
@@ -180,14 +190,15 @@ def __options_localai(model: str) -> VlmPipelineOptions:
     )
 
 
-def __picture_description_options(model: str) -> PictureDescriptionVlmOptions:
+def __picture_description_options(model: str, url: str) -> PictureDescriptionApiOptions:
     """
     Configuração funcional para processamento de imagens com VLM.
     """
-    return PictureDescriptionVlmOptions(
-        repo_id=model,  # Substitua pelo modelo desejado
-        prompt=__get_mermaid_prompt(),
-        generation_config={"max_new_tokens": 2048},
+    return PictureDescriptionApiOptions(
         batch_size=8,
+        prompt=__get_mermaid_prompt(),
+        url=AnyUrl(url),
+        timeout=1_200,
         picture_area_threshold=0.05,
+        params={"model": model, "max_completion_tokens": 2048},
     )

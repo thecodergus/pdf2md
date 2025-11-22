@@ -59,6 +59,6 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    logging.disable(sys.maxsize)
+    # logging.disable(sys.maxsize)
     load_dotenv()
     main()
