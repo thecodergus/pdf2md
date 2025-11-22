@@ -51,7 +51,7 @@ def __options_openrouter(model: str) -> VlmPipelineOptions:
     - qwen/qwen3-vl-235b-a22b-instruct
     - qwen/qwen2.5-vl-72b-instruct
     """
-    api_key: AnyUrl = __get_openrouter_api_key()
+    api_key: str = __get_openrouter_api_key()
 
     URL: AnyUrl = AnyUrl("https://openrouter.ai/api/v1/chat/completions")
 
