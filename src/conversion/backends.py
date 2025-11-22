@@ -15,12 +15,12 @@ from docling.datamodel.accelerator_options import AcceleratorDevice, Accelerator
 
 def __options_ollama(model: str) -> VlmPipelineOptions:
 
-    URL: str = "http://localhost:11434/v1/chat/completions"
+    URL: AnyUrl = AnyUrl("http://localhost:11434/v1/chat/completions")
     return VlmPipelineOptions(
         do_picture_description=True,
         picture_description_options=__picture_description_options(model, URL),
         vlm_options=ApiVlmOptions(
-            url=AnyUrl(URL),
+            url=URL,
             params={
                 "model": model,
                 "temperature": 0.3,
@@ -53,14 +53,14 @@ def __options_openrouter(model: str) -> VlmPipelineOptions:
     """
     api_key: AnyUrl = __get_openrouter_api_key()
 
-    URL: str = "https://openrouter.ai/api/v1/chat/completions"
+    URL: AnyUrl = AnyUrl("https://openrouter.ai/api/v1/chat/completions")
 
     return VlmPipelineOptions(
         enable_remote_services=True,
         do_picture_description=True,
         picture_description_options=__picture_description_options(model, URL),
         vlm_options=ApiVlmOptions(
-            url=AnyUrl(URL),
+            url=URL,
             params={
                 "model": model,  # Substitua por outro modelo OpenRouter se necessário
                 "temperature": 0.3,
@@ -74,6 +74,7 @@ def __options_openrouter(model: str) -> VlmPipelineOptions:
             timeout=1200,  # Timeout ampliado para API remota
             headers={
                 "Content-Type": "application/json",
+                "Authorization": f"Bearer {api_key}",
             },
         ),
         accelerator_options=AcceleratorOptions(
@@ -105,14 +106,14 @@ def __options_lmstudio(model: str) -> VlmPipelineOptions:
     - Estrutura de tabelas avançada
     """
 
-    URL: str = "http://192.168.15.3:1234/v1/chat/completions"
+    URL: AnyUrl = AnyUrl("http://192.168.15.3:1234/v1/chat/completions")
 
     return VlmPipelineOptions(
         enable_remote_services=True,
         do_picture_description=True,
         picture_description_options=__picture_description_options(model, URL),
         vlm_options=ApiVlmOptions(
-            url=AnyUrl(URL),
+            url=URL,
             params={
                 "model": model,
                 "temperature": 0.3,
@@ -151,7 +152,7 @@ def __options_localai(model: str) -> VlmPipelineOptions:
         - Imutabilidade garantida em todas as estruturas retornadas.
         - Parâmetros de geração e OCR idênticos aos de outros backends para portabilidade.
     """
-    URL: str = "http://localhost:8080/v1/chat/completions"
+    URL: AnyUrl = AnyUrl("http://localhost:8080/v1/chat/completions")
 
     # Retorna configuração imutável do pipeline
     return VlmPipelineOptions(
@@ -159,7 +160,7 @@ def __options_localai(model: str) -> VlmPipelineOptions:
         do_picture_description=True,
         picture_description_options=__picture_description_options(model, URL),
         vlm_options=ApiVlmOptions(
-            url=AnyUrl(URL),
+            url=URL,
             params={
                 "model": model,
                 "temperature": 0.3,
@@ -179,14 +180,16 @@ def __options_localai(model: str) -> VlmPipelineOptions:
     )
 
 
-def __picture_description_options(model: str, url: str) -> PictureDescriptionApiOptions:
+def __picture_description_options(
+    model: str, url: AnyUrl
+) -> PictureDescriptionApiOptions:
     """
     Configuração funcional para processamento de imagens com VLM.
     """
     return PictureDescriptionApiOptions(
         batch_size=8,
         prompt=__get_mermaid_prompt(),
-        url=AnyUrl(url),
+        url=url,
         timeout=1_200,
         picture_area_threshold=0.05,
         params={"model": model, "max_completion_tokens": 2048},
